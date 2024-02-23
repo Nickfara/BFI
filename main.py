@@ -116,21 +116,22 @@ class Demo(MDApp):
             btn_layout.add_widget(btn_launch_autoclick)
             btn_layout.add_widget(btn_menu_item)
 
-            top_layout = BoxLayout(orientation='horizontal')
+            top_layout = BoxLayout(orientation='horizontal', size_hint_y=None, height='220dp')
             top_layout.add_widget(btn_layout)
             top_layout.add_widget(switched())
-            screen = Screen()
-            screen.size = ('300dp', '50dp')
-            layout = BoxLayout(orientation='vertical')
-            layout.add_widget(top_layout)
-            scroll = ScrollView(size_hint=(1, 1), pos_hint={'center_x': .5, 'center_y': .5},
-                                do_scroll_x=False)
-            scroll_layout = BoxLayout(orientation='vertical')
+
+            scroll_layout = BoxLayout(orientation='vertical', spacing=0)
             scroll_layout.size_hint_y = None
             scroll_layout.bind(minimum_height=scroll_layout.setter('height'))
             scroll_layout.add_widget(self.list_items)
+            scroll = ScrollView(size_hint=(1, 1),
+                                do_scroll_x=False)
             scroll.add_widget(scroll_layout)
+
+            layout = BoxLayout(orientation='vertical')
+            layout.add_widget(top_layout)
             layout.add_widget(scroll)
+            screen = Screen()
             screen.add_widget(layout)
             return screen
 
