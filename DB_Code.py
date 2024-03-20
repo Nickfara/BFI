@@ -30,11 +30,10 @@ def get_item(item=None):
     else:
         item_row = conn.execute('SELECT * FROM Items')
         item_get = item_row.fetchall()
-        item_return = []
+        item_return = {}
         for x in item_get:
-            item_return.append(dict(x))
+            item_return[dict(x)['item']] = dict(x)['names']
         conn.close()
-        print(item_return)
         return item_return
 
 
@@ -59,10 +58,7 @@ def add_item(item=None):
     print('\033[32mБД: add_item\033[0m')
     print(f'Товар: {item}, добавляется!')
     items = get_item()
-    list_ = []
-    for i in items:
-        list_.append(i['item'])
-    if item not in list_:
+    if item not in items:
         if item != None:
             print('\033[32mСработала БД: create_item\033[0m')
             conn = get_db_connection()
@@ -77,19 +73,19 @@ def add_item(item=None):
 
 
 # Обновления данных
-def update_item(item=None, names=None):
+def update_item(item=None, names=None, items=None):
     if type(item) is str and names is not None:
         print('\033[32mБД: update_item\033[0m')
-        item_ = get_item(item)
-        if item_ != None:
-            conn = get_db_connection()
-            conn.execute('UPDATE Items SET item = ?, names = ? WHERE item = ?', (item, names, item))
-            conn.commit()
-            conn.close()
-            print('\033[32mБД: update_item - закончила работу!\033[0m')
-            return True
-        else:
-            return False
+        print(f'item={item}')
+        print(f'names={names}')
+        print(f'items={items}')
+        item_ = items[item]
+        conn = get_db_connection()
+        conn.execute('UPDATE Items SET item = ?, names = ? WHERE item = ?', (item, names, item))
+        conn.commit()
+        conn.close()
+        print('\033[32mБД: update_item - закончила работу!\033[0m')
+        return True
     else:
         return False
 

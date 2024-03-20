@@ -1,4 +1,4 @@
-import os
-import pyperclip
+item = {'огурцы': 'самса'}
 
-os.system('echo ' + 'ывппвып'.strip() + '| clip')
+if 'огурцыы' in item:
+    print('Есть')

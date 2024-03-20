@@ -37,27 +37,32 @@ def delete_item(item=None):
         db.delete_item(item)
 
 
-def update_items(item=None, name=None):
+def update_items(item=None, name=None, items=None):
     print('\033[32mФУНК: update_items\033[0m')
-    names = db.get_item(item)
-    print(f'names = {names}\nПотому что item={item}, \nname={name}')
-    if names != False:
-        names = names['names']
-        if names is not None:
-            if name is not None and item is not None:
+    print(f'Потому что item={item}, \nname={name}')
+    if type(item) == dict:
+        for key in item:
+            item_names = items[key]
+            item_item = key
+    print(f'item_names = {item_names}')
+    print(f'item_item = {item_item}')
+    if item != None:
+        if None not in [item_names, item_item]:
+            if name is not None:
                 print('ЗАПУСК АПДЕЙТ БАЗЫ')
-                names_list = names.split('///')
+                names_list = item_names.split('///')
                 if name['name'] not in names_list:
-                    names += '///' + name['name']
-                db.update_item(item, names)
+                    item_names += '///' + name['name']
+                db.update_item(item_item, item_names, items)
         else:
+            print('Товар не имеет наименований!')
             if type(name) == list:
                 name = ''
                 for i in name:
                     name += '///' + i
-                db.update_item(item, name)
+                db.update_item(item_item, name, items)
             else:
-                db.update_item(item, name['name'])
+                db.update_item(item_item, name['name'], items)
     else:
         print('Объекта "' + item + '" нет в базе!')
         return False
