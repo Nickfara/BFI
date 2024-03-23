@@ -57,6 +57,8 @@ def doc(shop, doc):
                 index = [0, 6, 2, 10]
             elif shop == 'ДЕСАН':
                 index = [0, 4, 3, 10]
+            elif shop == 'Арома':
+                index = [0, 4, 3, 5]
             else:
                 return False
             if doc.split('.')[1] in ['xls', 'xlsx']:
