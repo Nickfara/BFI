@@ -1,5 +1,5 @@
 import json
-import csv
+import re
 
 def check(doc): # Сканер json чека
     check = None
@@ -67,7 +67,7 @@ def doc(shop, doc):
                 worksheet = workbook.sheet_by_index(0)
                 print(shop)
                 id = 1
-                for i in range(0, 900):
+                for i in range(0, 90):
                     item = {}
                     item['id'] = id
                     try:
@@ -75,11 +75,20 @@ def doc(shop, doc):
                             id += 1
                             item['name'] = worksheet.cell_value(i, index[0])
                             item['count'] = worksheet.cell_value(i, index[1])
+                            if item['count'].find(',') != -1:
+                                item['count'] = item['count'].split(',')
+                                item['count'] = '.'.join(item['count'])
+                            item['count'] = re.sub("[^0-9.]",'', item['count'])
                             item['type'] = worksheet.cell_value(i, index[2])
                             item['cost'] = worksheet.cell_value(i, index[3])
+                            if item['cost'].find(',') != -1:
+                                item['cost'] = item['cost'].split(',')
+                                item['cost'] = '.'.join(item['cost'])
+                            if item['cost'] == '':
+                                item['cost'] = '0'
                             items.append(item)
-                    except:
-                        pass
+                    except Exception as e:
+                        print(e)
                 print(items)
                 return items
             else:

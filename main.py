@@ -9,7 +9,7 @@ from kivymd.uix.label import MDLabel
 from kivymd.uix.menu import MDDropdownMenu
 from kivymd.uix.screen import Screen
 from kivymd.uix.scrollview import ScrollView
-from kivy.uix.switch import Switch
+from kivymd.uix.selectioncontrol import MDSwitch as Switch
 from kivymd.uix.textfield import MDTextField
 
 onlyfiles = [f for f in listdir('documents') if isfile(join('documents', f))]
@@ -23,11 +23,16 @@ import autoclick
 class Demo(MDApp):
     def __init__(self, **kwargs):  # Переменные класса
         super().__init__()
+        # Оформление
+        self.color_acent_1 = '#fefefe'
+        self.color_acent_2 = '#fe433e'
+        self.color_panel = '#272a2f'
+        self.color_background = '#212429'
         self.scroll_layout = None
         self.shops = None  # Названия поставщиков
         self.btn_select_shop = None  # Выбранный поставщик
         self.doc = None # Накладная в словаре
-        self.dialog = None
+        self.dialog = None # Диалоговое окно
         self.item_name = None # Выбранный из списка товар
         self.name_ = None # Наименование товара
         self.items = None  # Список товаров из iIko
@@ -35,20 +40,24 @@ class Demo(MDApp):
         self.drop = None
         self.menu_select_item = None  # Хранит в себе название товара если он один в поиске
         self.enter_for_save = False
+        self.shops = ['Чек', 'КОФ (Передний лист)', 'КОФ (Полный список)', 'METRO', 'Матушка',
+                      'Хозы', 'Юнит', 'Выпечка', 'Айсбери', 'ДЕСАН', 'Виста', 'Кофе', 'Арома']  # Названия поставщиков
+        self.shops = sorted(self.shops)  # Сортировка
         # ______________________________Переключатели
-        self.switch_name = Switch(active=True, size_hint_x=None, width='100dp')
-        self.switch_type = Switch(active=True, size_hint_x=None, width='100dp')
-        self.switch_count = Switch(active=False, size_hint_x=None, width='100dp')
-        self.switch_cost = Switch(active=False, size_hint_x=None, width='100dp')
-        self.switch_version = Switch(active=False, size_hint_x=None, width='100dp')
+        self.switch_name = Switch(width='64', track_color_active=self.color_acent_2, thumb_color_inactive=self.color_acent_2, thumb_color_active=self.color_background)
+        self.switch_name.active = True
+        self.switch_type = Switch(size_hint=(None, None), width='10dp', track_color_active=self.color_acent_2, thumb_color_inactive=self.color_acent_2, thumb_color_active=self.color_background)
+        self.switch_type.active = True
+        self.switch_count = Switch(size_hint=(None, None), width='10dp', track_color_active=self.color_acent_2, thumb_color_inactive=self.color_acent_2, thumb_color_active=self.color_background)
+        self.switch_cost = Switch(size_hint=(None, None), width='10dp', track_color_active=self.color_acent_2, thumb_color_inactive=self.color_acent_2, thumb_color_active=self.color_background)
+        self.switch_version = Switch(active=False, size_hint=(None, None), width='10dp', track_color_active=self.color_background, track_color_inactive=self.color_background, thumb_color_inactive=self.color_acent_1, thumb_color_active=self.color_acent_1)
         self.switch_version.bind(active=self.func_switch_version)
+        switched = (self.switch_name, self.switch_type, self.switch_count, self.switch_cost, self.switch_version)
 
     def build(self):
         # ______________________________Выбор поставщика
         def add_button_shops():
-            self.shops = ['Чек', 'КОФ (Передний лист)', 'КОФ (Полный список)', 'METRO', 'Матушка',
-                          'Хозы', 'Юнит', 'Выпечка', 'Айсбери', 'ДЕСАН', 'Виста', 'Кофе', 'Арома']  # Названия поставщиков
-            self.btn_select_shop = MDRectangleFlatButton(text='Поставщик', size_hint=(1, None), icon='plus')
+            self.btn_select_shop = MDRectangleFlatButton(text='Поставщик', size_hint=(1, None), icon='plus', text_color=self.color_acent_1, line_color=self.color_acent_2)
             menu_items = []
             for shop in self.shops:
                 menu_items.append({
@@ -62,7 +71,7 @@ class Demo(MDApp):
 
         # _______________________________Выбор накладной
         def add_button_doc():
-            self.btn_input_doc_name = MDRectangleFlatButton(text='Накладная', size_hint=(1, None))
+            self.btn_input_doc_name = MDRectangleFlatButton(text='Накладная', size_hint=(1, None), text_color=self.color_acent_1, line_color=self.color_acent_2)
             menu_items = []
             for doc_name in onlyfiles:
                 if doc_name.split('.')[1] in ['json', 'xls', 'xlsx']:
@@ -77,11 +86,11 @@ class Demo(MDApp):
 
         # _______________________________Переключатели
         def switched():
-            switch_name_text = MDLabel(text='Название:', valign="center", halign="right")
-            switch_type_text = MDLabel(text='Тип:', valign="center", halign="right")
-            switch_count_text = MDLabel(text='Количество:', valign="center", halign="right")
-            switch_cost_text = MDLabel(text='Цена:', valign="center", halign="right")
-            switch_version_text = MDLabel(text='Режим:', valign="center", halign="right")
+            switch_name_text = MDLabel(text='Название:', valign="center", halign="right", theme_text_color = 'Custom', text_color=self.color_acent_1)
+            switch_type_text = MDLabel(text='Тип:', valign="center", halign="right", theme_text_color = 'Custom', text_color=self.color_acent_1)
+            switch_count_text = MDLabel(text='Количество:', valign="center", halign="right", theme_text_color = 'Custom', text_color=self.color_acent_1)
+            switch_cost_text = MDLabel(text='Цена:', valign="center", halign="right", theme_text_color = 'Custom', text_color=self.color_acent_1)
+            switch_version_text = MDLabel(text='Режим:', valign="center", halign="right", theme_text_color = 'Custom', text_color=self.color_acent_1)
             switch_name_layout = BoxLayout(orientation='horizontal')
             switch_type_layout = BoxLayout(orientation='horizontal')
             switch_count_layout = BoxLayout(orientation='horizontal')
@@ -97,7 +106,7 @@ class Demo(MDApp):
             switch_cost_layout.add_widget(self.switch_cost)
             switch_version_layout.add_widget(switch_version_text)
             switch_version_layout.add_widget(self.switch_version)
-            switch_all_layout = BoxLayout(orientation='vertical')
+            switch_all_layout = BoxLayout(orientation='vertical', padding=(0,0,50,0), size_hint_x=None, width=200, md_bg_color=self.color_panel)
             switch_all_layout.add_widget(switch_name_layout)
             switch_all_layout.add_widget(switch_type_layout)
             switch_all_layout.add_widget(switch_count_layout)
@@ -106,24 +115,30 @@ class Demo(MDApp):
             return switch_all_layout
 
         # _______________________________Остальные кнопки__________________________________________________
-        btn_doc_read = MDRectangleFlatButton(text="Считать", on_release=self.func_doc_read, size_hint=(1, None))
-        btn_doc_convert = MDRectangleFlatButton(text="Конвертировать", on_release=self.func_doc_convert_new, size_hint=(1, None))
-        btn_launch_autoclick = MDRectangleFlatButton(text="Запустить автокликер", on_release=self.func_launch_autoclick, size_hint=(1, None))
-        btn_menu_item = MDRectangleFlatButton(text="Редактировать товар", on_release=self.func_dialog_open, size_hint=(1, None))
+        btn_doc_read = MDRectangleFlatButton(text="Считать", on_release=self.func_doc_read, size_hint=(1, None), text_color=self.color_acent_1, line_color=self.color_acent_2)
+        btn_doc_convert = MDRectangleFlatButton(text="Конвертировать", on_release=self.func_doc_convert_new, size_hint=(1, None), text_color=self.color_acent_1, line_color=self.color_acent_2)
+        btn_launch_autoclick = MDRectangleFlatButton(text="Запустить автокликер", on_release=self.func_launch_autoclick, size_hint=(1, None), text_color=self.color_acent_1, line_color=self.color_acent_2)
+        btn_menu_item = MDRectangleFlatButton(text="Редактировать товар", on_release=self.func_dialog_open, size_hint=(1, None), text_color=self.color_acent_1, line_color=self.color_acent_2)
 
         def sort_layouts():
             add_button_doc()
             add_button_shops()
-            btn_layout = BoxLayout(orientation='vertical', size_hint=(None, None), width=180, padding=10, spacing=10)
-            btn_layout.add_widget(self.btn_select_shop)
-            btn_layout.add_widget(self.btn_input_doc_name)
-            btn_layout.add_widget(btn_doc_read)
-            btn_layout.add_widget(btn_doc_convert)
-            btn_layout.add_widget(btn_launch_autoclick)
+            btn_select_layout = BoxLayout(orientation='horizontal', size_hint_y=None, height=self.btn_select_shop.height)
+            btn_select_layout.add_widget(self.btn_select_shop)
+            btn_select_layout.add_widget(self.btn_input_doc_name)
+            btn_read_layout = BoxLayout(orientation='horizontal', size_hint_y=None, height=self.btn_select_shop.height)
+            btn_read_layout.add_widget(btn_doc_read)
+            btn_read_layout.add_widget(btn_doc_convert)
+            btn_layout = BoxLayout(orientation='vertical', size_hint_x=None, width=280, padding=10, spacing=10, md_bg_color=self.color_panel)
+            btn_layout.add_widget(btn_select_layout)
+            btn_layout.add_widget(btn_read_layout)
             btn_layout.add_widget(btn_menu_item)
+            btn_layout.add_widget(BoxLayout())
+            btn_layout.add_widget(btn_launch_autoclick)
 
-            top_layout = BoxLayout(orientation='horizontal', size_hint_y=None, height='285dp', md_bg_color="#D0FFD8")
+            top_layout = BoxLayout(orientation='horizontal', size_hint_y=None, height='285dp', md_bg_color=self.color_background)
             top_layout.add_widget(btn_layout)
+            top_layout.add_widget(BoxLayout())
             top_layout.add_widget(switched())
 
             self.scroll_layout = BoxLayout(orientation='vertical', spacing=0)
@@ -144,7 +159,8 @@ class Demo(MDApp):
         print(onlyfiles)
         return sort_layouts()
 
-    def func_doc_read(self, obj):  # Считать накладную
+    # Считать накладную
+    def func_doc_read(self, obj):
         from Scan_Doc import doc
         self.scroll_layout.clear_widgets()
         if self.btn_select_shop != 'Выбрать поставщика':
@@ -161,11 +177,13 @@ class Demo(MDApp):
             text = MDLabel(text='Поставщик не выбран!')
             self.scroll_layout.clear_widgets(text)
 
-    def func_doc_convert_new(self, obj):  # Первое выполнение конвертации
+    # Первое выполнение конвертации
+    def func_doc_convert_new(self, obj):
         self.end_docList = []
         self.func_doc_convert_repeat(obj)
 
-    def func_doc_convert_repeat(self, obj):  # Продолжение конвертации после не найденого товара
+    # Продолжение конвертации после не найденого товара
+    def func_doc_convert_repeat(self, obj):
         self.end_docList = []
         if self.doc is None:
             self.scroll_layout.clear_widgets()
@@ -199,28 +217,32 @@ class Demo(MDApp):
                 text_item_Layout.add_widget(list_items_text2)
                 self.scroll_layout.add_widget(text_item_Layout)
 
-    def func_add_item(self, obj):  # Добавить товар
+    # Добавить товар
+    def func_add_item(self, obj):
         print(self.list_.text)
         DB_Func.add_item(item=self.list_.text)
         self.items = copy(DB_Func.take_items())
 
-    def func_clear_item(self, obj):  # Очистить товар
+    # Очистить товар
+    def func_clear_item(self, obj):
         print(self.list_.text)
         DB_Func.clear_item(item=self.list_.text)
         self.items = copy(DB_Func.take_items())
 
-    def func_delete_item(self, obj):  # Удалить товар
+    # Удалить товар
+    def func_delete_item(self, obj):
         print(self.list_.text)
         DB_Func.delete_item(item=self.list_.text)
         self.items = copy(DB_Func.take_items())
 
-    @mainthread
-    def func_launch_autoclick(self, obj):  # Запуск автокликера
+    # Запуск автокликера
+    def func_launch_autoclick(self, obj):
         print(self.switch_name.active)
         checkboxs = {'name': self.switch_name.active, 'type': self.switch_type.active,
                      'count': self.switch_count.active, 'cost': self.switch_cost.active}
         autoclick.start(self.end_docList, self.btn_select_shop, checkboxs)
 
+    # Диалоговое окно - Открытие
     def func_dialog_open(self, obj):
         self.enter_for_save = False
         self.item_name = None
@@ -275,6 +297,7 @@ class Demo(MDApp):
         self.dialog = MDDialog(title=title_text, type="custom", content_cls=sort_())
         self.dialog.open()
 
+    # Диалоговое окно - Закрытие
     def func_dialog_close(self, obj):
         if obj.text == 'Закрыть':
             self.dialog.dismiss()
@@ -285,6 +308,7 @@ class Demo(MDApp):
             self.func_doc_convert_repeat(obj)
             self.enter_for_save = False
 
+    # Диалоговое окно - Кнопка сохранить
     def func_dialog_save(self, obj):
         item = {self.item_name: self.items[self.item_name]}
         response = DB_Func.update_items(item, self.name_, self.items)
@@ -294,12 +318,14 @@ class Demo(MDApp):
             self.dialog.dismiss()
             self.func_doc_convert_repeat(obj)
 
+    # Диалоговое окно - Сохранить на ентер
     def func_dialog_save_enter(self, window, key, *args):
         if self.enter_for_save:
             print('Сработала функция нажатия Enter')
             if key == 13:
                 self.func_dialog_save(key)
 
+    # Диалоговое окно - Кнопка-название товара
     def func_dialog_select(self, obj):
         print('Выбран: ', str(obj))
         self.list_.text = str(obj)
@@ -310,6 +336,11 @@ class Demo(MDApp):
             self.enter_for_save = True
         else:
             self.enter_for_save = False
+
+    # Диалоговое окно - Кнопка-название товара (Активация через ентер)
+    def func_dialog_enter(self, obj):
+        obj = self.menu_select_item
+        self.func_dialog_select(obj=obj)
 
     # Загрузка, поиск и отображение товаров в выпадающем списке
     def func_dialog_load(self, obj=None, item=None):
@@ -337,29 +368,29 @@ class Demo(MDApp):
         self.drop.caller = self.list_
         self.drop.open()
 
-    def func_dialog_enter(self, obj):
-        obj = self.menu_select_item
-        self.func_dialog_select(obj=obj)
-
+    # Кнопка выбора поставщика - Открытие диалогового окна
     def func_select_shop(self, obj):
         self.dropdown.open()
 
+    # Кнопка-название поставщика - выбор поставщика и закрытие диалогового окна
     def func_select_shop_active(self, shop):
         self.dropdown.dismiss()
         self.btn_select_shop.text = shop
 
+    # Кнопка выбора документа
     def func_select_doc(self, name):
         self.dropdown2.open()
 
+    # Кнопка-название документа
     def func_select_doc_active(self, name):
-
         self.dropdown2.dismiss()
         self.btn_input_doc_name.text = name
 
+    # Пустая функция
     def pass_(self, window, key, *args):
         pass
 
-    # Переключатель режима
+    # Переключатель режима автокликера
     def func_switch_version(self, obj, pos):
         self.switch_name.active = (False if pos else True)
         self.switch_type.active = (False if pos else True)
