@@ -1,9 +1,10 @@
 from os import listdir
 from os.path import isfile, join
+from kivymd.uix.card import MDCard
 from kivy.clock import mainthread
 from kivymd.uix.boxlayout import MDBoxLayout as BoxLayout
 from kivymd.app import MDApp
-from kivymd.uix.button import MDRectangleFlatButton, MDFlatButton
+from kivymd.uix.button import MDRectangleFlatButton as RFB, MDFlatButton as FB, MDRectangleFlatIconButton as RFIB
 from kivymd.uix.dialog import MDDialog
 from kivymd.uix.label import MDLabel
 from kivymd.uix.menu import MDDropdownMenu
@@ -27,7 +28,9 @@ class Demo(MDApp):
         self.color_acent_1 = '#fefefe'
         self.color_acent_2 = '#fe433e'
         self.color_panel = '#272a2f'
-        self.color_background = '#212429'
+        self.color_background_start = '#212529'
+        self.color_background_top = '#1E2125'
+        self.color_list = '#5F646D'
         self.scroll_layout = None
         self.shops = None  # Названия поставщиков
         self.btn_select_shop = None  # Выбранный поставщик
@@ -44,25 +47,28 @@ class Demo(MDApp):
                       'Хозы', 'Юнит', 'Выпечка', 'Айсбери', 'ДЕСАН', 'Виста', 'Кофе', 'Арома']  # Названия поставщиков
         self.shops = sorted(self.shops)  # Сортировка
         # ______________________________Переключатели
-        self.switch_name = Switch(width='64', track_color_active=self.color_acent_2, thumb_color_inactive=self.color_acent_2, thumb_color_active=self.color_background)
+        self.switch_name = Switch(width='64', track_color_active=self.color_acent_2, thumb_color_inactive=self.color_acent_2, thumb_color_active=self.color_background_start)
         self.switch_name.active = True
-        self.switch_type = Switch(size_hint=(None, None), width='10dp', track_color_active=self.color_acent_2, thumb_color_inactive=self.color_acent_2, thumb_color_active=self.color_background)
+        self.switch_type = Switch(size_hint=(None, None), width='10dp', track_color_active=self.color_acent_2, thumb_color_inactive=self.color_acent_2, thumb_color_active=self.color_background_start)
         self.switch_type.active = True
-        self.switch_count = Switch(size_hint=(None, None), width='10dp', track_color_active=self.color_acent_2, thumb_color_inactive=self.color_acent_2, thumb_color_active=self.color_background)
-        self.switch_cost = Switch(size_hint=(None, None), width='10dp', track_color_active=self.color_acent_2, thumb_color_inactive=self.color_acent_2, thumb_color_active=self.color_background)
-        self.switch_version = Switch(active=False, size_hint=(None, None), width='10dp', track_color_active=self.color_background, track_color_inactive=self.color_background, thumb_color_inactive=self.color_acent_1, thumb_color_active=self.color_acent_1)
+        self.switch_count = Switch(size_hint=(None, None), width='10dp', track_color_active=self.color_acent_2, thumb_color_inactive=self.color_acent_2, thumb_color_active=self.color_background_start)
+        self.switch_cost = Switch(size_hint=(None, None), width='10dp', track_color_active=self.color_acent_2, thumb_color_inactive=self.color_acent_2, thumb_color_active=self.color_background_start)
+        self.switch_version = Switch(active=False, size_hint=(None, None), width='10dp', track_color_active=self.color_background_start, track_color_inactive=self.color_background_start, thumb_color_inactive=self.color_acent_1, thumb_color_active=self.color_acent_1)
         self.switch_version.bind(active=self.func_switch_version)
         switched = (self.switch_name, self.switch_type, self.switch_count, self.switch_cost, self.switch_version)
 
     def build(self):
         # ______________________________Выбор поставщика
         def add_button_shops():
-            self.btn_select_shop = MDRectangleFlatButton(text='Поставщик', size_hint=(1, None), icon='plus', text_color=self.color_acent_1, line_color=self.color_acent_2)
+            self.btn_select_shop = RFB(text='Поставщик', size_hint=(0.5, None), icon='plus', text_color=self.color_acent_1, line_color=self.color_acent_2)
             menu_items = []
             for shop in self.shops:
                 menu_items.append({
                     "text": f"{shop}",
                     "on_release": lambda x=f"{shop}": self.func_select_shop_active(x),
+                    'theme_text_color': 'Custom',
+                    "text_color": self.color_acent_1,
+                    "md_bg_color": self.color_background_start
                 })
             self.dropdown = MDDropdownMenu(items=menu_items)
             self.dropdown.caller = self.btn_select_shop
@@ -71,13 +77,16 @@ class Demo(MDApp):
 
         # _______________________________Выбор накладной
         def add_button_doc():
-            self.btn_input_doc_name = MDRectangleFlatButton(text='Накладная', size_hint=(1, None), text_color=self.color_acent_1, line_color=self.color_acent_2)
+            self.btn_input_doc_name = RFB(text='Накладная', size_hint=(0.5, None), text_color=self.color_acent_1, line_color=self.color_acent_2)
             menu_items = []
             for doc_name in onlyfiles:
                 if doc_name.split('.')[1] in ['json', 'xls', 'xlsx']:
                     menu_items.append({
                         "text": f"{doc_name}",
                         "on_release": lambda x=f"{doc_name}": self.func_select_doc_active(x),
+                        'theme_text_color': 'Custom',
+                        "text_color": self.color_acent_1,
+                        "md_bg_color": self.color_background_start
                     })
             self.dropdown2 = MDDropdownMenu(items=menu_items)
             self.dropdown2.caller = self.btn_input_doc_name
@@ -87,7 +96,7 @@ class Demo(MDApp):
         # _______________________________Переключатели
         def switched():
             switch_name_text = MDLabel(text='Название:', valign="center", halign="right", theme_text_color = 'Custom', text_color=self.color_acent_1)
-            switch_type_text = MDLabel(text='Тип:', valign="center", halign="right", theme_text_color = 'Custom', text_color=self.color_acent_1)
+            switch_type_text = MDLabel(text='Тип товара:', valign="center", halign="right", theme_text_color = 'Custom', text_color=self.color_acent_1)
             switch_count_text = MDLabel(text='Количество:', valign="center", halign="right", theme_text_color = 'Custom', text_color=self.color_acent_1)
             switch_cost_text = MDLabel(text='Цена:', valign="center", halign="right", theme_text_color = 'Custom', text_color=self.color_acent_1)
             switch_version_text = MDLabel(text='Режим:', valign="center", halign="right", theme_text_color = 'Custom', text_color=self.color_acent_1)
@@ -115,10 +124,10 @@ class Demo(MDApp):
             return switch_all_layout
 
         # _______________________________Остальные кнопки__________________________________________________
-        btn_doc_read = MDRectangleFlatButton(text="Считать", on_release=self.func_doc_read, size_hint=(1, None), text_color=self.color_acent_1, line_color=self.color_acent_2)
-        btn_doc_convert = MDRectangleFlatButton(text="Конвертировать", on_release=self.func_doc_convert_new, size_hint=(1, None), text_color=self.color_acent_1, line_color=self.color_acent_2)
-        btn_launch_autoclick = MDRectangleFlatButton(text="Запустить автокликер", on_release=self.func_launch_autoclick, size_hint=(1, None), text_color=self.color_acent_1, line_color=self.color_acent_2)
-        btn_menu_item = MDRectangleFlatButton(text="Редактировать товар", on_release=self.func_dialog_open, size_hint=(1, None), text_color=self.color_acent_1, line_color=self.color_acent_2)
+        btn_doc_read = RFB(text="Считать", on_release=self.func_doc_read, size_hint=(0.5, None), text_color=self.color_acent_1, line_color=self.color_acent_2)
+        btn_doc_convert = RFB(text="Конвертировать", on_release=self.func_doc_convert_new, size_hint=(0.5, None), text_color=self.color_acent_1, line_color=self.color_acent_2)
+        btn_launch_autoclick = RFB(text="Запустить автокликер", on_release=self.func_launch_autoclick, size_hint=(1, 1), text_color=self.color_acent_1, line_color=self.color_acent_2, md_bg_color=self.color_background_start)
+        btn_menu_item = RFIB(icon='pencil-outline', text="Редактировать товар", on_release=self.func_dialog_open, size_hint=(.2, .5), text_color=self.color_acent_2, icon_color=self.color_acent_2, line_color=self.color_panel, font_size=14)
 
         def sort_layouts():
             add_button_doc()
@@ -129,27 +138,32 @@ class Demo(MDApp):
             btn_read_layout = BoxLayout(orientation='horizontal', size_hint_y=None, height=self.btn_select_shop.height)
             btn_read_layout.add_widget(btn_doc_read)
             btn_read_layout.add_widget(btn_doc_convert)
-            btn_layout = BoxLayout(orientation='vertical', size_hint_x=None, width=280, padding=10, spacing=10, md_bg_color=self.color_panel)
+            btn_edit_layout = BoxLayout(orientation='horizontal', size_hint_y=None, height=18)
+            btn_edit_layout.add_widget(BoxLayout())
+            btn_edit_layout.add_widget(btn_menu_item)
+            btn_layout = BoxLayout(orientation='vertical', size_hint_x=None, width=350, padding=10, spacing=10, md_bg_color=self.color_panel)
             btn_layout.add_widget(btn_select_layout)
             btn_layout.add_widget(btn_read_layout)
-            btn_layout.add_widget(btn_menu_item)
+            btn_layout.add_widget(btn_edit_layout)
             btn_layout.add_widget(BoxLayout())
             btn_layout.add_widget(btn_launch_autoclick)
 
-            top_layout = BoxLayout(orientation='horizontal', size_hint_y=None, height='285dp', md_bg_color=self.color_background)
+            top_layout = BoxLayout(orientation='horizontal', size_hint_y=None, height='285dp', md_bg_color=self.color_background_top)
             top_layout.add_widget(btn_layout)
             top_layout.add_widget(BoxLayout())
             top_layout.add_widget(switched())
 
-            self.scroll_layout = BoxLayout(orientation='vertical', spacing=0)
+            self.scroll_layout = BoxLayout(orientation='vertical', spacing=0, padding=(0,10,0,0))
             self.scroll_layout.size_hint_y = None
             self.scroll_layout.bind(minimum_height=self.scroll_layout.setter('height'))
             scroll = ScrollView(size_hint=(1, 1),
                                 do_scroll_x=False)
             scroll.add_widget(self.scroll_layout)
 
-            layout = BoxLayout(orientation='vertical')
-            layout.add_widget(top_layout)
+            layout = BoxLayout(orientation='vertical', md_bg_color=self.color_list)
+            top_layout_card = MDCard(orientation='horizontal', elevation=2, radius=[0,])
+            top_layout_card.add_widget(top_layout)
+            layout.add_widget(top_layout_card)
             layout.add_widget(scroll)
             screen = Screen()
             screen.add_widget(layout)
@@ -204,14 +218,14 @@ class Demo(MDApp):
                 self.ind_convert_item += 1
                 self.scroll_layout.clear_widgets()
                 if self.btn_select_shop.text == 'Чек':
-                    list_items_text3 = MDLabel(text=f'Дата: {self.temp["date"]}\n')
+                    list_items_text3 = MDLabel(text=f'Дата: {self.temp["date"]}\n', theme_text_color='Custom', text_color=self.color_acent_1)
                     list_items_text3.text += f'\nЧек : {self.temp["check"]}\n\n'
                     data_layout = BoxLayout(orientation='horizontal', size_hint_y=None, height='120dp')
                     data_layout.add_widget(list_items_text3)
                     self.scroll_layout.add_widget(data_layout)
             for i1 in self.end_docList:
-                list_items_text1 = MDLabel(text = '\n' + f"{i1['id']}. {i1['original']} ||||| {i1['name']} |||||")
-                list_items_text2 = MDLabel(text = '\n' + f"{i1['count']} X {i1['cost']} = {i1['sum'] if self.btn_select_shop == 'Чек' else ''}", halign="right", size_hint_x = None, width='190dp')
+                list_items_text1 = MDLabel(text = '\n' + f"{i1['id']}. {i1['original']} ||||| {i1['name']} |||||", theme_text_color='Custom', text_color=self.color_acent_1)
+                list_items_text2 = MDLabel(text = '\n' + f"{i1['count']} X {i1['cost']} = {i1['sum'] if self.btn_select_shop == 'Чек' else ''}", halign="right", size_hint_x = None, width='190dp', theme_text_color='Custom', text_color=self.color_acent_1)
                 text_item_Layout = BoxLayout(orientation='horizontal', size_hint_y=None, height='60dp')
                 text_item_Layout.add_widget(list_items_text1)
                 text_item_Layout.add_widget(list_items_text2)
@@ -246,22 +260,22 @@ class Demo(MDApp):
     def func_dialog_open(self, obj):
         self.enter_for_save = False
         self.item_name = None
-        btn_item_add = MDRectangleFlatButton(text="Добавить товар", pos_hint={
+        btn_item_add = RFB(text="Добавить товар", text_color=self.color_acent_1, line_color=self.color_acent_2, pos_hint={
             'center_x': 0.5, 'center_y': 0.6}, on_release=self.func_add_item)
-        btn_item_delete = MDRectangleFlatButton(text="Удалить товар", pos_hint={
-            'center_x': 0.5, 'center_y': 0.6}, on_release=self.func_delete_item)
-        btn_item_clear = MDRectangleFlatButton(text="Очистить товар", pos_hint={
-            'center_x': 0.5, 'center_y': 0.6}, on_release=self.func_clear_item)
+        btn_item_delete = RFB(text="Удалить товар", pos_hint={
+            'center_x': 0.5, 'center_y': 0.6}, text_color=self.color_acent_1, line_color=self.color_acent_2, on_release=self.func_delete_item)
+        btn_item_clear = RFB(text="Очистить товар", pos_hint={
+            'center_x': 0.5, 'center_y': 0.6}, text_color=self.color_acent_1, line_color=self.color_acent_2, on_release=self.func_clear_item)
         name = self.name_['name'] if type(self.name_) == dict else 'none'
         text = f"Товар с наименованием: '{name}', не найден, выберите его из списка ниже! "
         if type(obj) is not int:
             if obj.text == 'Редактировать товар':
                 text = 'Выберите товар из списка, для редактирования!'
-        btn_skip = MDFlatButton(text="Пропустить", text_color=self.theme_cls.primary_color,
-                                on_release=self.func_dialog_close)
-        btn_save = MDRectangleFlatButton(text="Сохранить", text_color=self.theme_cls.primary_color,
-                                         on_release=self.func_dialog_save)
-        self.list_ = MDTextField(hint_text="Поиск товара", on_text_validate=self.func_dialog_enter)
+        btn_skip = FB(text="Пропустить", theme_text_color='Custom', text_color=self.color_acent_1,
+                      on_release=self.func_dialog_close)
+        btn_save = RFB(text="Сохранить", text_color=self.color_acent_1,
+                       on_release=self.func_dialog_save, line_color=self.color_acent_2)
+        self.list_ = MDTextField(hint_text="Поиск товара", on_text_validate=self.func_dialog_enter, text_color_focus=self.color_acent_1, line_color_focus=self.color_acent_2, hint_text_color_focus=self.color_acent_2)
         self.list_.bind(text=self.func_dialog_load)
         self.dialog_layout = BoxLayout(spacing="12dp", size_hint_y=None, height="220dp", orientation='vertical')
 
@@ -275,26 +289,26 @@ class Demo(MDApp):
             btn_item_layout.add_widget(btn_item_clear)
             btn_item_layout.add_widget(btn_item_add)
 
-            self.dialog_layout.add_widget(MDLabel(text=text))
+            self.dialog_layout.add_widget(MDLabel(text=text, theme_text_color='Custom', text_color=self.color_acent_1))
             self.dialog_layout.add_widget(self.list_)
 
             if type(obj) is not int:
                 if obj.text == 'Редактировать товар':
                     btn_layout.remove_widget(btn_skip)
                     btn_layout.remove_widget(btn_save)
-                    btn_layout.add_widget(MDFlatButton(text="Закрыть", text_color=self.theme_cls.primary_color,
-                                                       on_release=self.func_dialog_close))
+                    btn_layout.add_widget(FB(text="Закрыть", theme_text_color='Custom', text_color=self.color_acent_1,
+                                             on_release=self.func_dialog_close))
             self.dialog_layout.add_widget(btn_item_layout)
             self.dialog_layout.add_widget(btn_layout)
 
             return self.dialog_layout
 
-        title_text = "Товар не найден!"
+        title_text = f"[color={self.color_acent_1}]Товар не найден![/color]"
         if type(obj) is not int:
-            if obj.text == 'Редактировать товары':
+            if obj.text == 'Редактировать товар':
                 title_text = 'Настройки товаров!'
 
-        self.dialog = MDDialog(title=title_text, type="custom", content_cls=sort_())
+        self.dialog = MDDialog(title=title_text, type="custom", content_cls=sort_(), md_bg_color=self.color_background_start)
         self.dialog.open()
 
     # Диалоговое окно - Закрытие
@@ -360,6 +374,9 @@ class Demo(MDApp):
                 menu_items.append({
                     "text": f"{i}",
                     "on_release": lambda x=f"{i}": self.func_dialog_select(x),
+                    'theme_text_color': 'Custom',
+                    "text_color": self.color_acent_1,
+                    "md_bg_color": self.color_background_start
                 })
 
         if len(menu_items) > 0:
