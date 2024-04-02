@@ -72,6 +72,9 @@ def get_item(name = None):
     if name is not None:
         name = name['name']
         item = db.get_item_names(name)
+        print('ПОИСК ОШИБКИ!!!')
+        print(name)
+        print(item)
         if item != False:
             return item
         else:

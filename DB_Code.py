@@ -19,7 +19,7 @@ def get_item(item=None):
     print('\033[32mБД: get_item\033[0m')
     conn = get_db_connection()
     if type(item) is str:
-        user_row = conn.execute('SELECT * FROM Items WHERE item = ?', (item,)).fetchone()
+        user_row = conn.execute('SELECT * FROM Items WHERE item = ?', (item.lower(),)).fetchone()
         conn.close()
         if user_row:
             # Преобразуем sqlite3.Row в словарь
@@ -39,17 +39,25 @@ def get_item(item=None):
 
 # Получения товара по наименованию
 def get_item_names(name=None):
+    print('\033[32mБД: get_item_names\033[0m')
+    print(name)
     conn = get_db_connection()
     if type(name) is str:
-        user_row = conn.execute('SELECT * FROM Items WHERE names LIKE ?', (f'%{name}%',)).fetchone()
+        name = name.lower()
+        user_row = conn.execute("SELECT * FROM Items WHERE names LIKE ? OR names LIKE ? OR names LIKE ? OR names LIKE ?", (f'{name}', f'{name}///%', f'%///{name}', f'%///{name}///%')).fetchone()
+        print(user_row)
         conn.close()
         if user_row:
             # Преобразуем sqlite3.Row в словарь
             user_dict = dict(user_row)
+            print(print(user_dict))
+            print('\033[32mБД: get_item_names - закончила работу!\033[0m')
             return user_dict
         else:
+            print('\033[32mБД: get_item_names - закончила работу!\033[0m')
             return False
     else:
+        print('\033[32mБД: get_item_names - закончила работу!\033[0m')
         return False
 
 
@@ -62,7 +70,7 @@ def add_item(item=None):
         if item != None:
             print('\033[32mСработала БД: create_item\033[0m')
             conn = get_db_connection()
-            conn.execute('INSERT INTO Items (item) VALUES (?)', (item,))
+            conn.execute('INSERT INTO Items (item) VALUES (?)', (item.lower(),))
             conn.commit()
             conn.close()
             return True
@@ -81,7 +89,7 @@ def update_item(item=None, names=None, items=None):
         print(f'items={items}')
         item_ = items[item]
         conn = get_db_connection()
-        conn.execute('UPDATE Items SET item = ?, names = ? WHERE item = ?', (item, names, item))
+        conn.execute('UPDATE Items SET item = ?, names = ? WHERE item = ?', (item.lower(), names.lower(), item.lower()))
         conn.commit()
         conn.close()
         print('\033[32mБД: update_item - закончила работу!\033[0m')
@@ -95,7 +103,7 @@ def delete_item(item=None):
     if item != None:
         print('\033[32mБД: delete_items\033[0m')
         conn = get_db_connection()
-        conn.execute('DELETE FROM Items WHERE item = ?', (item,))
+        conn.execute('DELETE FROM Items WHERE item = ?', (item.lower(),))
         conn.commit()
         conn.close()
         return True
@@ -108,7 +116,7 @@ def clear_item(item=None, names=None):
     if item != None:
         print('\033[32mБД: delete_items\033[0m')
         conn = get_db_connection()
-        conn.execute('UPDATE Items SET item = ?, names = ? WHERE item = ?', (item, names, item))
+        conn.execute('UPDATE Items SET item = ?, names = ? WHERE item = ?', (item.lower(), names.lower(), item.lower()))
         conn.commit()
         conn.close()
         return True
@@ -133,5 +141,23 @@ def create_base():
     connection.commit()
     connection.close()
 
+def lowered_base():
+    print(get_item())
+    connection = get_db_connection()
+    item_row = connection.execute('SELECT * FROM Items')
+    item_get = item_row.fetchall()
+    item_return = {}
+    for x in item_get:
+        item_return[dict(x)['item']] = dict(x)['names']
+        item = dict(x)['item']
+        names = dict(x)['names']
+        if names != None:
+            connection.execute('UPDATE Items SET names = ? WHERE item = ?', (names.lower(), item))
+        if item != None:
+            connection.execute('UPDATE Items SET item = ? WHERE item = ?', (item.lower(), item))
+    connection.commit()
+    connection.close()
+    print(get_item())
 
-#delete_name(item='сливки 33%', names=None)
+lowered_base()
+

@@ -1,7 +1,7 @@
+import asyncio
 from os import listdir
 from os.path import isfile, join
 from kivymd.uix.card import MDCard
-from kivy.clock import mainthread
 from kivymd.uix.boxlayout import MDBoxLayout as BoxLayout
 from kivymd.app import MDApp
 from kivymd.uix.button import MDRectangleFlatButton as RFB, MDFlatButton as FB, MDRectangleFlatIconButton as RFIB
@@ -43,19 +43,23 @@ class Demo(MDApp):
         self.drop = None
         self.menu_select_item = None  # Хранит в себе название товара если он один в поиске
         self.enter_for_save = False
+        self.temp = None # Временные данные с накладной (Используется для получения шапки чека, при запуске кликера)
         self.shops = ['Чек', 'КОФ (Передний лист)', 'КОФ (Полный список)', 'METRO', 'Матушка',
-                      'Хозы', 'Юнит', 'Выпечка', 'Айсбери', 'ДЕСАН', 'Виста', 'Кофе', 'Арома']  # Названия поставщиков
+                      'Хозы', 'Юнит', 'Выпечка', 'Айсберри', 'ДЕСАН', 'Виста', 'Кофе', 'Арома']  # Названия поставщиков
         self.shops = sorted(self.shops)  # Сортировка
         # ______________________________Переключатели
         self.switch_name = Switch(width='64', track_color_active=self.color_acent_2, thumb_color_inactive=self.color_acent_2, thumb_color_active=self.color_background_start)
         self.switch_name.active = True
+        self.switch_header = Switch(width='64', track_color_active=self.color_acent_2,
+                                  thumb_color_inactive=self.color_acent_2,
+                                  thumb_color_active=self.color_background_start, pos=(.8, .5))
+        self.switch_header.active = True
         self.switch_type = Switch(size_hint=(None, None), width='10dp', track_color_active=self.color_acent_2, thumb_color_inactive=self.color_acent_2, thumb_color_active=self.color_background_start)
         self.switch_type.active = True
         self.switch_count = Switch(size_hint=(None, None), width='10dp', track_color_active=self.color_acent_2, thumb_color_inactive=self.color_acent_2, thumb_color_active=self.color_background_start)
         self.switch_cost = Switch(size_hint=(None, None), width='10dp', track_color_active=self.color_acent_2, thumb_color_inactive=self.color_acent_2, thumb_color_active=self.color_background_start)
-        self.switch_version = Switch(active=False, size_hint=(None, None), width='10dp', track_color_active=self.color_background_start, track_color_inactive=self.color_background_start, thumb_color_inactive=self.color_acent_1, thumb_color_active=self.color_acent_1)
+        self.switch_version = Switch(active=False, size_hint=(None, None), width='10dp', track_color_active=self.color_background_start, track_color_inactive=self.color_background_start, thumb_color_inactive=self.color_list, thumb_color_active=self.color_list)
         self.switch_version.bind(active=self.func_switch_version)
-        switched = (self.switch_name, self.switch_type, self.switch_count, self.switch_cost, self.switch_version)
 
     def build(self):
         # ______________________________Выбор поставщика
@@ -95,16 +99,20 @@ class Demo(MDApp):
 
         # _______________________________Переключатели
         def switched():
+            switch_header_text = MDLabel(text='Шапка:', valign="center", halign="right", theme_text_color = 'Custom', text_color=self.color_acent_1)
             switch_name_text = MDLabel(text='Название:', valign="center", halign="right", theme_text_color = 'Custom', text_color=self.color_acent_1)
             switch_type_text = MDLabel(text='Тип товара:', valign="center", halign="right", theme_text_color = 'Custom', text_color=self.color_acent_1)
             switch_count_text = MDLabel(text='Количество:', valign="center", halign="right", theme_text_color = 'Custom', text_color=self.color_acent_1)
             switch_cost_text = MDLabel(text='Цена:', valign="center", halign="right", theme_text_color = 'Custom', text_color=self.color_acent_1)
             switch_version_text = MDLabel(text='Режим:', valign="center", halign="right", theme_text_color = 'Custom', text_color=self.color_acent_1)
+            switch_header_layout = BoxLayout(orientation='horizontal')
             switch_name_layout = BoxLayout(orientation='horizontal')
             switch_type_layout = BoxLayout(orientation='horizontal')
             switch_count_layout = BoxLayout(orientation='horizontal')
             switch_cost_layout = BoxLayout(orientation='horizontal')
             switch_version_layout = BoxLayout(orientation='horizontal')
+            switch_header_layout.add_widget(switch_header_text)
+            switch_header_layout.add_widget(self.switch_header)
             switch_name_layout.add_widget(switch_name_text)
             switch_name_layout.add_widget(self.switch_name)
             switch_type_layout.add_widget(switch_type_text)
@@ -115,17 +123,23 @@ class Demo(MDApp):
             switch_cost_layout.add_widget(self.switch_cost)
             switch_version_layout.add_widget(switch_version_text)
             switch_version_layout.add_widget(self.switch_version)
-            switch_all_layout = BoxLayout(orientation='vertical', padding=(0,0,50,0), size_hint_x=None, width=200, md_bg_color=self.color_panel)
-            switch_all_layout.add_widget(switch_name_layout)
-            switch_all_layout.add_widget(switch_type_layout)
-            switch_all_layout.add_widget(switch_count_layout)
-            switch_all_layout.add_widget(switch_cost_layout)
-            switch_all_layout.add_widget(switch_version_layout)
+            switch_left_layout = BoxLayout(orientation='vertical', padding=(0,0,40,0), size_hint_x=None, width=185, md_bg_color=self.color_panel)
+            switch_right_layout = BoxLayout(orientation='vertical', padding=(0,0,35,0), size_hint_x=None, width=180, md_bg_color=self.color_panel)
+            switch_all_layout = BoxLayout(orientation='horizontal', padding=(0, 0, 50, 0), size_hint_x=None, width=(switch_left_layout.width + switch_right_layout.width),
+                                          md_bg_color=self.color_panel)
+            switch_left_layout.add_widget(switch_name_layout)
+            switch_left_layout.add_widget(switch_type_layout)
+            switch_left_layout.add_widget(switch_header_layout)
+            switch_right_layout.add_widget(switch_count_layout)
+            switch_right_layout.add_widget(switch_cost_layout)
+            switch_right_layout.add_widget(switch_version_layout)
+            switch_all_layout.add_widget(switch_left_layout)
+            switch_all_layout.add_widget(switch_right_layout)
             return switch_all_layout
 
         # _______________________________Остальные кнопки__________________________________________________
-        btn_doc_read = RFB(text="Считать", on_release=self.func_doc_read, size_hint=(0.5, None), text_color=self.color_acent_1, line_color=self.color_acent_2)
-        btn_doc_convert = RFB(text="Конвертировать", on_release=self.func_doc_convert_new, size_hint=(0.5, None), text_color=self.color_acent_1, line_color=self.color_acent_2)
+        self.btn_doc_read = RFB(text="Считать", on_release=self.func_doc_read, size_hint=(0.5, None), text_color=self.color_acent_1, line_color=self.color_acent_2)
+        self.btn_doc_convert = RFB(text="Конвертировать", on_release=self.func_doc_convert_new, size_hint=(0.5, None), text_color=self.color_acent_1, line_color=self.color_acent_2)
         btn_launch_autoclick = RFB(text="Запустить автокликер", on_release=self.func_launch_autoclick, size_hint=(1, 1), text_color=self.color_acent_1, line_color=self.color_acent_2, md_bg_color=self.color_background_start)
         btn_menu_item = RFIB(icon='pencil-outline', text="Редактировать товар", on_release=self.func_dialog_open, size_hint=(.2, .5), text_color=self.color_acent_2, icon_color=self.color_acent_2, line_color=self.color_panel, font_size=14)
 
@@ -136,8 +150,8 @@ class Demo(MDApp):
             btn_select_layout.add_widget(self.btn_select_shop)
             btn_select_layout.add_widget(self.btn_input_doc_name)
             btn_read_layout = BoxLayout(orientation='horizontal', size_hint_y=None, height=self.btn_select_shop.height)
-            btn_read_layout.add_widget(btn_doc_read)
-            btn_read_layout.add_widget(btn_doc_convert)
+            btn_read_layout.add_widget(self.btn_doc_read)
+            btn_read_layout.add_widget(self.btn_doc_convert)
             btn_edit_layout = BoxLayout(orientation='horizontal', size_hint_y=None, height=18)
             btn_edit_layout.add_widget(BoxLayout())
             btn_edit_layout.add_widget(btn_menu_item)
@@ -148,7 +162,7 @@ class Demo(MDApp):
             btn_layout.add_widget(BoxLayout())
             btn_layout.add_widget(btn_launch_autoclick)
 
-            top_layout = BoxLayout(orientation='horizontal', size_hint_y=None, height='285dp', md_bg_color=self.color_background_top)
+            top_layout = BoxLayout(orientation='horizontal', padding=(0, 0, 0, 0,), size_hint_y=None, height='200dp', md_bg_color=self.color_background_top)
             top_layout.add_widget(btn_layout)
             top_layout.add_widget(BoxLayout())
             top_layout.add_widget(switched())
@@ -156,12 +170,11 @@ class Demo(MDApp):
             self.scroll_layout = BoxLayout(orientation='vertical', spacing=0, padding=(0,10,0,0))
             self.scroll_layout.size_hint_y = None
             self.scroll_layout.bind(minimum_height=self.scroll_layout.setter('height'))
-            scroll = ScrollView(size_hint=(1, 1),
-                                do_scroll_x=False)
+            scroll = ScrollView(do_scroll_x=False)
             scroll.add_widget(self.scroll_layout)
 
             layout = BoxLayout(orientation='vertical', md_bg_color=self.color_list)
-            top_layout_card = MDCard(orientation='horizontal', elevation=2, radius=[0,])
+            top_layout_card = MDCard(orientation='horizontal', elevation=2, radius=[0,], size_hint_y=None, height=top_layout.height,)
             top_layout_card.add_widget(top_layout)
             layout.add_widget(top_layout_card)
             layout.add_widget(scroll)
@@ -219,7 +232,7 @@ class Demo(MDApp):
                 self.scroll_layout.clear_widgets()
                 if self.btn_select_shop.text == 'Чек':
                     list_items_text3 = MDLabel(text=f'Дата: {self.temp["date"]}\n', theme_text_color='Custom', text_color=self.color_acent_1)
-                    list_items_text3.text += f'\nЧек : {self.temp["check"]}\n\n'
+                    list_items_text3.text += f'\nЧек: {self.temp["check"]}\n\n'
                     data_layout = BoxLayout(orientation='horizontal', size_hint_y=None, height='120dp')
                     data_layout.add_widget(list_items_text3)
                     self.scroll_layout.add_widget(data_layout)
@@ -251,10 +264,19 @@ class Demo(MDApp):
 
     # Запуск автокликера
     def func_launch_autoclick(self, obj):
-        print(self.switch_name.active)
-        checkboxs = {'name': self.switch_name.active, 'type': self.switch_type.active,
-                     'count': self.switch_count.active, 'cost': self.switch_cost.active}
-        autoclick.start(self.end_docList, self.btn_select_shop, checkboxs)
+        try:
+            print(self.switch_name.active)
+            checkboxs = {'name': self.switch_name.active, 'type': self.switch_type.active,
+                         'count': self.switch_count.active, 'cost': self.switch_cost.active, 'header': self.switch_header.active}
+            if self.temp != None and self.btn_select_shop.text == 'Чек':
+                info = {'date':self.temp["date"], 'number': f'\nЧек: {self.temp["check"]}'}
+            else:
+                info = None
+            asyncio.ensure_future(autoclick.start(self.end_docList, self.btn_select_shop, checkboxs, check_data=info))
+        except Exception as e:
+            self.scroll_layout.clear_widgets()
+            print(e)
+            self.scroll_layout.add_widget(MDLabel(text=str(e)))
 
     # Диалоговое окно - Открытие
     def func_dialog_open(self, obj):
@@ -393,6 +415,35 @@ class Demo(MDApp):
     def func_select_shop_active(self, shop):
         self.dropdown.dismiss()
         self.btn_select_shop.text = shop
+        if shop in ['Виста', 'Кофе', 'Айсберри']:
+            print(shop)
+            self.btn_doc_read.disabled = True
+            self.btn_doc_convert.disabled = True
+            self.switch_header.active = True
+            self.switch_header.disabled = True
+            self.switch_name.disabled = True
+            self.switch_name.active = True
+            self.switch_type.disabled = True
+            self.switch_type.active = True
+            self.switch_count.disabled = True
+            self.switch_count.active = True
+            self.switch_cost.disabled = True
+            self.switch_cost.active = True
+            self.switch_version.disabled = True
+            self.btn_input_doc_name.disabled = True
+        else:
+            self.btn_doc_read.disabled = False
+            self.btn_doc_convert.disabled = False
+            self.switch_header.disabled = False
+            self.switch_name.disabled = False
+            self.switch_type.disabled = False
+            self.switch_count.disabled = False
+            self.switch_cost.disabled = False
+            self.switch_version.disabled = False
+            self.btn_input_doc_name.disabled = False
+
+
+            # Кнопка выбора документа
 
     # Кнопка выбора документа
     def func_select_doc(self, name):
@@ -400,6 +451,7 @@ class Demo(MDApp):
 
     # Кнопка-название документа
     def func_select_doc_active(self, name):
+        self.switch_header.active = True
         self.dropdown2.dismiss()
         self.btn_input_doc_name.text = name
 
@@ -410,10 +462,23 @@ class Demo(MDApp):
     # Переключатель режима автокликера
     def func_switch_version(self, obj, pos):
         self.switch_name.active = (False if pos else True)
+        self.switch_header.active = False
         self.switch_type.active = (False if pos else True)
         self.switch_count.active = (True if pos else False)
         self.switch_cost.active = (True if pos else False)
 
 
+# Используем эту функцию для запуска цикла событий Kivy с интеграцией asyncio
+def run_async():
+    loop = asyncio.get_event_loop()
+
+    # Запускаем цикл событий Kivy
+    async_run = asyncio.ensure_future(asyncio.gather(Demo().async_run(async_lib='asyncio')))
+    # Планируем остановку цикла, когда Kivy App закроется
+    async_run.add_done_callback(lambda *args: loop.stop())
+
+    # Запускаем цикл событий asyncio
+    loop.run_forever()
+
 if __name__ == "__main__":
-    Demo().run()
+    run_async()
