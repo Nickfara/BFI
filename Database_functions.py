@@ -1,6 +1,7 @@
 import json
+import logging
 import Database_connections as db
-log = False
+log = True
 
 try:
     with open('Database_iIko_items.db', 'r') as f:
@@ -12,7 +13,7 @@ except:
 
 
 def take_items(item=None):
-    print('\033[32mФУНК: take_items\033[0m')
+    logging.info('ФУНК: take_items')
     items = db.get_item(item)
     if items == None:
         return('Ошибка')
@@ -20,28 +21,28 @@ def take_items(item=None):
 
 
 def add_item(item=None):
-    print('\033[32mФУНК: add_items\033[0m')
+    logging.info('ФУНК: add_items')
     if log: print(item)
     if type(item) is str:
         db.add_item(item)
 
 
 def clear_item(item=None):
-    print('\033[32mФУНК: clear_item\033[0m')
+    logging.info('ФУНК: clear_item')
     if log: print(item)
     if type(item) is str:
         db.clear_item(item=item)
 
 
 def delete_item(item=None):
-    print('\033[32mФУНК: delete_item\033[0m')
+    logging.info('ФУНК: delete_item')
     if log: print(item)
     if type(item) is str:
         db.delete_item(item)
 
 
 def update_items(item=None, name=None, items=None):
-    print('\033[32mФУНК: update_items\033[0m')
+    logging.info('ФУНК: update_items')
     if log: print(f'Потому что item={item}, \nname={name}')
     if type(item) == dict:
         for key in item:
@@ -72,7 +73,7 @@ def update_items(item=None, name=None, items=None):
 
 
 def get_item(name = None):
-    print('\033[32mФУНК: get_item\033[0m')
+    logging.info('ФУНК: get_item')
     if name is not None:
         if log: print('NAME IS A:')
         if log: print(name)

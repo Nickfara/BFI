@@ -2,9 +2,9 @@ import pyautogui
 import time
 import pyperclip
 import os
-import asyncio
+import logging
 import Database_connections as dc
-log = False
+log = True
 def paste(text):
     pyperclip.copy(text)
     pyautogui.keyDown('ctrl')
@@ -13,7 +13,7 @@ def paste(text):
 
 
 def keyboard():  # Проверка расскладки и изменение на английскую!
-    print('\033[32mАВТОКЛИКЕР: keyboard\033[0m')
+    logging.info('АВТОКЛИКЕР: keyboard\033[0m')
     pyautogui.keyDown('ctrl')
     pyautogui.press('a')
     pyautogui.press('c')
@@ -29,7 +29,7 @@ def keyboard():  # Проверка расскладки и изменение �
 
 
 def header(shop, check_data):
-    print('\033[32mАВТОКЛИКЕР: header\033[0m')
+    logging.info('АВТОКЛИКЕР: header\033[0m')
     shops = {'Чек':'Рынок/Магазин', 'Коф':'ИП Петухов В.В.', 'КофП':'ИП Петухов В.В.',
                 'Метро':'ООО "МЕТРО КЭШ ЭНД КЕРРИ"', 'Матушка':'ООО ТД "Матушка"','Хозы':'ИП Касумов М.А.',
                 'Юнит':'ООО "Юнит"', 'Выпечка':'ИП Насретдинов Д.Н.', 'Айсберри':'ООО ТД "Айсберри"',
@@ -85,7 +85,7 @@ def header(shop, check_data):
 
 
 def start(items, shop, checkboxs, check_data=None):
-    print('\033[32mАВТОКЛИКЕР: start\033[0m')
+    logging.info('АВТОКЛИКЕР: start\033[0m')
     if log: print('Автокликер запущен!')
     dc.update_item('АВТОКЛИКЕР', '1')
     time.sleep(5)
@@ -106,8 +106,8 @@ def start(items, shop, checkboxs, check_data=None):
             paste('240' if shop.text == 'Виста' else '8')
             pyautogui.press('enter')
     else:
-        if type(items) is list:
-            if type(items[0]) is dict and len(items) > 0:
+        if isinstance(items, list):
+            if isinstance(items[0], dict) and len(items) > 0:
                 if checkboxs['header']:
                     header(shop, check_data)
                 for i in items:

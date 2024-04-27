@@ -1,3 +1,4 @@
+import logging
 import asyncio
 from os import listdir
 from os.path import isfile, join
@@ -18,7 +19,7 @@ from copy import copy
 
 import Database_functions
 import Database_connections as dc
-import Autoclick
+import autoclick
 import Wildberries_parser as WB_Pars
 
 onlyfiles = [f for f in listdir('documents') if isfile(join('documents', f))]
@@ -34,14 +35,14 @@ async def async_autoclick(a, b, c, d):
         from concurrent.futures import ThreadPoolExecutor
         executor = ThreadPoolExecutor()
         def start_clicker():
-            Autoclick.start(a, b, c, check_data=d)
+            autoclick.start(a, b, c, check_data=d)
         await loop.run_in_executor(executor, start_clicker)
     else:
         print('Остановка автокликера!')
         dc.update_item('АВТОКЛИКЕР', '0')
 
 def base_get():
-    print('\033[32mИНТЕРФЕЙС: base_get\033[0m')
+    logging.info('ИНТЕРФЕЙС: base_get')
     with open('Wildberries_database.txt', 'r') as f:
         data = f.read()
         if data.find('|') != -1:
@@ -52,7 +53,7 @@ def base_get():
 
 
 def base_push(string):
-    print('\033[32mИНТЕРФЕЙС: base_push\033[0m')
+    logging.info('ИНТЕРФЕЙС: base_push')
     with open('Wildberries_database.txt', 'w') as f:
         if log: print('Чтение файла базы WB...')
         if log: print(string)
@@ -91,7 +92,7 @@ class Demo(MDApp):
         self.dialog_wb = None
 
     def scan_file(self):
-        print('\033[32mИНТЕРФЕЙС: scan_file\033[0m')
+        logging.info('ИНТЕРФЕЙС: scan_file')
         menu_items = []
         for doc_name in onlyfiles:
             if doc_name.split('.')[1] in ['json', 'xls', 'xlsx', 'WB']:
@@ -105,7 +106,8 @@ class Demo(MDApp):
         return menu_items
 
     def build(self):
-        print('\033[32mИНТЕРФЕЙС: build\033[0m')
+        logging.info('ИНТЕРФЕЙС: build')
+        logging.info('ИНТЕРФЕЙС: build')
 
         # ______________________________Выбор поставщика
         def add_button_shops():
@@ -274,7 +276,7 @@ class Demo(MDApp):
 
     # Считать накладную
     def func_doc_read(self, instance):
-        print('\033[32mИНТЕРФЕЙС: func_doc_read\033[0m')
+        logging.info('ИНТЕРФЕЙС: func_doc_read')
         from Scanning_documents import doc
         self.scroll_layout.clear_widgets()
         if self.btn_select_shop != 'Выбрать поставщика':
@@ -297,14 +299,14 @@ class Demo(MDApp):
 
     # Первое выполнение конвертации
     def func_doc_convert_new(self, obj):
-        print('\033[32mИНТЕРФЕЙС: func_doc_convert_new\033[0m')
+        logging.info('ИНТЕРФЕЙС: func_doc_convert_new')
         self.end_docList = []
         self.func_doc_convert_repeat(obj)
 
     # Продолжение конвертации после не найденого товара
     def func_doc_convert_repeat(self, obj):
-        print('\033[32mИНТЕРФЕЙС: func_doc_convert_repeat\033[0m')
-        if log: print('\033[32mИНТЕРФЕЙС: func_doc_convert_repeat\033[0m')
+        logging.info('ИНТЕРФЕЙС: func_doc_convert_repeat')
+        if log: logging.info('ИНТЕРФЕЙС: func_doc_convert_repeat')
         self.end_docList = []
         if log: print('SELF.DOC:')
         if log: print(self.doc)
@@ -349,28 +351,28 @@ class Demo(MDApp):
 
     # Добавить товар
     def func_add_item(self, instance):
-        print('\033[32mИНТЕРФЕЙС: func_add_item\033[0m')
+        logging.info('ИНТЕРФЕЙС: func_add_item')
         if log: print(self.list_.text)
         Database_functions.add_item(item=self.list_.text)
         self.items = copy(Database_functions.take_items())
 
     # Очистить товар
     def func_clear_item(self, instance):
-        print('\033[32mИНТЕРФЕЙС: func_clear_item\033[0m')
+        logging.info('ИНТЕРФЕЙС: func_clear_item')
         if log: print(self.list_.text)
         Database_functions.clear_item(item=self.list_.text)
         self.items = copy(Database_functions.take_items())
 
     # Удалить товар
     def func_delete_item(self, instance):
-        print('\033[32mИНТЕРФЕЙС: func_delete_item\033[0m')
+        logging.info('ИНТЕРФЕЙС: func_delete_item')
         if log: print(self.list_.text)
         Database_functions.delete_item(item=self.list_.text)
         self.items = copy(Database_functions.take_items())
 
     # Запуск автокликера
     def func_launch_autoclick(self, instance):
-        print('\033[32mИНТЕРФЕЙС: func_launch_autoclick\033[0m')
+        logging.info('ИНТЕРФЕЙС: func_launch_autoclick')
         try:
             if log: print(self.switch_name.active)
             checkboxs = {'name': self.switch_name.active, 'type': self.switch_type.active,
@@ -391,7 +393,7 @@ class Demo(MDApp):
 
     # Диалоговое окно - Открытие
     def func_dialog_open(self, obj):
-        print('\033[32mИНТЕРФЕЙС: func_dialog_open\033[0m')
+        logging.info('ИНТЕРФЕЙС: func_dialog_open')
         self.enter_for_save = False
         self.item_name = None
         btn_item_add = RFB(text="Добавить товар", text_color=self.color_acent_1, line_color=self.color_acent_2,
@@ -455,7 +457,7 @@ class Demo(MDApp):
 
     # Диалоговое окно - Закрытие
     def func_dialog_close(self, obj):
-        print('\033[32mИНТЕРФЕЙС: func_dialog_close\033[0m')
+        logging.info('ИНТЕРФЕЙС: func_dialog_close')
         if obj.text == 'Закрыть':
             self.dialog.dismiss()
             self.enter_for_save = False
@@ -467,7 +469,7 @@ class Demo(MDApp):
 
     # Диалоговое окно - Кнопка сохранить
     def func_dialog_save(self, obj):
-        print('\033[32mИНТЕРФЕЙС: func_dialog_save\033[0m')
+        logging.info('ИНТЕРФЕЙС: func_dialog_save')
         item = {self.item_name: self.items[self.item_name]}
         response = Database_functions.update_items(item, self.name_, self.items)
         self.enter_for_save = False
@@ -478,7 +480,7 @@ class Demo(MDApp):
 
     # Диалоговое окно - Сохранить на ентер
     def func_dialog_save_enter(self, window, key, i, r, x):
-        print('\033[32mИНТЕРФЕЙС: func_dialog_save_enter\033[0m')
+        logging.info('ИНТЕРФЕЙС: func_dialog_save_enter')
         if self.enter_for_save:
             if log: print('Сработала функция нажатия Enter')
             if key == 13:
@@ -486,7 +488,7 @@ class Demo(MDApp):
 
     # Диалоговое окно - Кнопка-название товара
     def func_dialog_select(self, obj):
-        print('\033[32mИНТЕРФЕЙС: func_dialog_select\033[0m')
+        logging.info('ИНТЕРФЕЙС: func_dialog_select')
         if log: print('Выбран: ', str(obj))
         self.list_.text = str(obj)
         self.item_name = str(obj)
@@ -499,13 +501,13 @@ class Demo(MDApp):
 
     # Диалоговое окно - Кнопка-название товара (Активация через ентер)
     def func_dialog_enter(self, instance):
-        print('\033[32mИНТЕРФЕЙС: func_dialog_enter\033[0m')
+        logging.info('ИНТЕРФЕЙС: func_dialog_enter')
         obj = self.menu_select_item
         self.func_dialog_select(obj=obj)
 
     # Загрузка, поиск и отображение товаров в выпадающем списке
     def func_dialog_load(self,instance, item=None):
-        print('\033[32mИНТЕРФЕЙС: func_dialog_load\033[0m')
+        logging.info('ИНТЕРФЕЙС: func_dialog_load')
         if self.drop:
             self.drop.dismiss()
         self.drop = MDDropdownMenu()
@@ -536,13 +538,13 @@ class Demo(MDApp):
 
     # Кнопка выбора поставщика - Открытие диалогового окна
     def func_select_shop(self, instance):
-        print('\033[32mИНТЕРФЕЙС: func_select_shop\033[0m')
+        logging.info('ИНТЕРФЕЙС: func_select_shop')
 
         self.dropdown.open()
 
     # Кнопка-название поставщика - выбор поставщика и закрытие диалогового окна
     def func_select_shop_active(self, shop):
-        print('\033[32mИНТЕРФЕЙС: func_select_shop_active\033[0m')
+        logging.info('ИНТЕРФЕЙС: func_select_shop_active')
         self.dropdown.dismiss()
         self.btn_select_shop.text = shop
         if shop in ['Виста', 'Кофе', 'Айсберри']:
@@ -576,13 +578,13 @@ class Demo(MDApp):
 
     # Кнопка выбора документа
     def func_select_doc(self, instance):
-        print('\033[32mИНТЕРФЕЙС: func_select_doc\033[0m')
+        logging.info('ИНТЕРФЕЙС: func_select_doc')
         self.dropdown2.items = self.scan_file()
         self.dropdown2.open()
 
     # Кнопка-название документа
     def func_select_doc_active(self, name):
-        print('\033[32mИНТЕРФЕЙС: func_select_doc_active\033[0m')
+        logging.info('ИНТЕРФЕЙС: func_select_doc_active')
         self.switch_header.active = True
         self.switch_name.active = True
         self.switch_type.active = True
@@ -603,12 +605,12 @@ class Demo(MDApp):
 
     # Пустая функция
     def pass_(self, window, key, *args):
-        print('\033[32mИНТЕРФЕЙС: pass_\033[0m')
+        logging.info('ИНТЕРФЕЙС: pass_')
         pass
 
     # Переключатель режима автокликера
     def func_switch_version(self, instance, pos):
-        print('\033[32mИНТЕРФЕЙС: func_switch_version\033[0m')
+        logging.info('ИНТЕРФЕЙС: func_switch_version')
         self.switch_name.active = (False if pos else True)
         self.switch_header.active = False
         self.switch_type.active = (False if pos else True)
@@ -617,7 +619,7 @@ class Demo(MDApp):
 
     # Запуск парсера чеков Wildberries
     def wb_parse(self, instance):
-        print('\033[32mИНТЕРФЕЙС: wb_parse\033[0m')
+        logging.info('ИНТЕРФЕЙС: wb_parse')
         def sort_():
             self.date = MDTextField(hint_text="Дата",
                                     helper_text_mode="on_focus", helper_text="Последний чек, в формате: 31.01.2024",
@@ -704,12 +706,12 @@ class Demo(MDApp):
         self.dialog_wb.open()
 
     def wb_on_focus(self, value, instance):
-        print('\033[32mИНТЕРФЕЙС: wb_on_focus\033[0m')
+        logging.info('ИНТЕРФЕЙС: wb_on_focus')
         if not value:  # Если фокус потерян
             self.replace_widget(new_widget=self.token_btn)
 
     def wb_replace_widget(self, new_widget):
-        print('\033[32mИНТЕРФЕЙС: wb_replace_widget\033[0m')
+        logging.info('ИНТЕРФЕЙС: wb_replace_widget')
         self.token.focus = True
         self.layout_top_wb.clear_widgets()
         self.layout_top_wb.add_widget(new_widget)
@@ -718,7 +720,7 @@ class Demo(MDApp):
         self.layout_top_wb.add_widget(self.save)
 
     def wb_save(self, instance):
-        print('\033[32mИНТЕРФЕЙС: wb_save\033[0m')
+        logging.info('ИНТЕРФЕЙС: wb_save')
         date = self.date.text
         if len(date) == 10:
             if date[2] == '.' and date[5] == '.':
@@ -749,7 +751,7 @@ class Demo(MDApp):
             self.verify.text = 'Длинна даты не правильная!'
 
     def wb_get(self, instance):
-        print('\033[32mИНТЕРФЕЙС: wb_get\033[0m')
+        logging.info('ИНТЕРФЕЙС: wb_get')
         layout_receipts = MDBoxLayout(orientation='vertical', padding=20)
         layout_receipts.size_hint_y = None
         layout_receipts.bind(minimum_height=layout_receipts.setter('height'))

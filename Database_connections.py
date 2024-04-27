@@ -1,4 +1,5 @@
 import sqlite3
+import logging
 log = False
 
 # Соединение с row
@@ -16,7 +17,7 @@ def get_db_connection2():
 
 # Получения товара по названию
 def get_item(item=None):
-    if log: print('\033[32mБД: get_item\033[0m')
+    if log: logging.info('БД: get_item')
     conn = get_db_connection()
     if type(item) is str:
         user_row = conn.execute('SELECT * FROM Items WHERE item = ?', (item.lower(),)).fetchone()
@@ -39,7 +40,7 @@ def get_item(item=None):
 
 # Получения товара по наименованию
 def get_item_names(name=None):
-    print('\033[32mБД: get_item_names\033[0m')
+    logging.info('БД: get_item_names')
     if log: print(name)
     conn = get_db_connection()
     if type(name) is str:
@@ -51,24 +52,24 @@ def get_item_names(name=None):
             # Преобразуем sqlite3.Row в словарь
             user_dict = dict(user_row)
             if log: print(user_dict)
-            if log: print('\033[32mБД: get_item_names - закончила работу!\033[0m')
+            if log: logging.info('БД: get_item_names - закончила работу!')
             return user_dict
         else:
-            if log: print('\033[32mБД: get_item_names - закончила работу!\033[0m')
+            if log: logging.info('БД: get_item_names - закончила работу!')
             return False
     else:
-        if log: print('\033[32mБД: get_item_names - закончила работу!\033[0m')
+        if log: logging.info('БД: get_item_names - закончила работу!')
         return False
 
 
 # Добавление товара
 def add_item(item=None):
-    print('\033[32mБД: add_item\033[0m')
+    logging.info('БД: add_item')
     if log: print(f'Товар: {item}, добавляется!')
     items = get_item()
     if item not in items:
         if item != None:
-            if log: print('\033[32mСработала БД: create_item\033[0m')
+            if log: logging.info('Сработала БД: create_item')
             conn = get_db_connection()
             conn.execute('INSERT INTO Items (item) VALUES (?)', (item.lower(),))
             conn.commit()
@@ -82,7 +83,7 @@ def add_item(item=None):
 
 # Обновления данных
 def update_item(item=None, names=None, items=None):
-    print('\033[32mБД: update_item\033[0m')
+    logging.info('БД: update_item')
     if type(item) is str and names is not None:
         if log: print(f'item={item}')
         if log: print(f'names={names}')
@@ -91,7 +92,7 @@ def update_item(item=None, names=None, items=None):
         conn.execute('UPDATE Items SET item = ?, names = ? WHERE item = ?', (item.lower(), names.lower(), item.lower()))
         conn.commit()
         conn.close()
-        if log: print('\033[32mБД: update_item - закончила работу!\033[0m')
+        if log: logging.info('БД: update_item - закончила работу!')
         return True
     else:
         return False
@@ -99,7 +100,7 @@ def update_item(item=None, names=None, items=None):
 
 # Удаление товара
 def delete_item(item=None):
-    print('\033[32mБД: delete_items\033[0m')
+    logging.info('БД: delete_items')
     if item != None:
         conn = get_db_connection()
         conn.execute('DELETE FROM Items WHERE item = ?', (item.lower(),))
@@ -112,7 +113,7 @@ def delete_item(item=None):
 
 # Удаление названий из товара
 def clear_item(item=None, names=None):
-    print('\033[32mБД: delete_items\033[0m')
+    logging.info('БД: delete_items')
     if item != None:
         conn = get_db_connection()
         conn.execute('UPDATE Items SET item = ?, names = ? WHERE item = ?', (str(item).lower(), str(names).lower(), str(item).lower()))
@@ -125,7 +126,7 @@ def clear_item(item=None, names=None):
 
 # Создание таблицы
 def create_base():
-    print('\033[32mБД: create_base\033[0m')
+    logging.info('БД: create_base')
     connection = get_db_connection()
     cursor = connection.cursor()
 
@@ -143,7 +144,7 @@ def create_base():
 
 
 def lowered_base():
-    print('\033[32mБД: lowered_base\033[0m')
+    logging.info('БД: lowered_base')
     if log: print(get_item())
     connection = get_db_connection()
     item_row = connection.execute('SELECT * FROM Items')

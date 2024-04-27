@@ -1,10 +1,11 @@
 import json
 import re
+import logging
 
-log = False
+log = True
 
 def check(doc): # Сканер json чека
-    print('\033[32mСКАН: check\033[0m')
+    logging.info('СКАН: check')
     check = None
     with open(doc, 'r', encoding='utf-8') as json_file:
         if doc.split('.')[1] == 'json':
@@ -35,7 +36,7 @@ def check(doc): # Сканер json чека
 
 
 def doc(shop, doc):
-    print('\033[32mСКАН: doc\033[0m')
+    logging.info('СКАН: doc')
     import xlrd
     items = []
     # Open the Workbook

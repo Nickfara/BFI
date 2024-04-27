@@ -1,6 +1,9 @@
-log = False
+import logging
+log = True
+
+
 def items(items = "iIko_items_exel_base.xlsx"):
-    print('\033[32miIko_items_read: items\033[0m')
+    logging.info('iIko_items_read: items')
     import xlrd
     workbook = xlrd.open_workbook(items)
     worksheet = workbook.sheet_by_index(0)
