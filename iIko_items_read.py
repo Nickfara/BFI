@@ -1,4 +1,6 @@
-def items(items = "iIko_items.xlsx"):
+log = False
+def items(items = "iIko_items_exel_base.xlsx"):
+    print('\033[32miIko_items_read: items\033[0m')
     import xlrd
     workbook = xlrd.open_workbook(items)
     worksheet = workbook.sheet_by_index(0)
@@ -10,9 +12,9 @@ def items(items = "iIko_items.xlsx"):
                 if len(str(worksheet.cell_value(i, j))) > 1 and worksheet.cell_value(i, j) != '\t':
                     item = worksheet.cell_value(i, j)
                     items.append(item)
-                    print(item)
+                    if log: print(item)
             except:
                 pass
-        print('')
+        if log: print('')
     return items
 

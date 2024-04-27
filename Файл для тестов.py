@@ -27,5 +27,6 @@ def run_async():
     # Запускаем цикл событий asyncio
     loop.run_forever()
 
+
 if __name__ == "__main__":
     run_async()
