@@ -45,7 +45,11 @@ def header(shop, check_data):
     if check_data != None:
         pyautogui.press('tab')
         time.sleep(0.5)
-        check_data['date'] = check_data['date'].split('T')[0].split('-')
+        if shop.text == 'Чек':
+            check_data['date'] = check_data['date'].split('T')[0].split('-')
+        else:
+            check_data['date'] = check_data['date'].split('.')
+            check_data['date'] = (check_data['date'][2], check_data['date'][1], check_data['date'][0])
         paste(check_data['date'][2])
         time.sleep(5)
         paste(check_data['date'][1])
@@ -70,13 +74,22 @@ def header(shop, check_data):
     if check_data != None:
         paste(check_data['number'])
         time.sleep(0.5)
-        pyautogui.press('tab', presses=3)
+        pyautogui.press('tab')
+        if shop.text != 'Чек':
+            paste(check_data['number'])
+            time.sleep(0.5)
+        pyautogui.press('tab', presses=2)
         time.sleep(0.5)
         paste(check_data['date'][2])
         paste(check_data['date'][1])
         paste(check_data['date'][0])
         time.sleep(0.5)
-        pyautogui.press('tab', presses=6)
+        pyautogui.press('tab', presses=2)
+        time.sleep(0.2)
+        if shop.text != 'Чек':
+            paste(check_data['number'])
+            time.sleep(0.5)
+        pyautogui.press('tab', presses=4)
     else:
         paste(numbers[shop.text])
         time.sleep(0.5)
@@ -84,7 +97,7 @@ def header(shop, check_data):
         time.sleep(0.5)
 
 
-def start(items, shop, checkboxs, check_data=None):
+def start(items, shop, checkboxs, format, check_data=None):
     logging.info('АВТОКЛИКЕР: start\033[0m')
     if log: print('Автокликер запущен!')
     dc.update_item('АВТОКЛИКЕР', '1')
@@ -173,12 +186,12 @@ def start(items, shop, checkboxs, check_data=None):
                                 paste('0')
                                 paste(i['count'])
                             pyautogui.press('enter')
-                            if shop.text in ['Айсбери', 'ДЕСАН']: # Если одна из этих накладных, то заводися сумма - шаги вправо
+                            if shop.text in ['Айсбери', 'Десан']: # Если одна из этих накладных, то заводися сумма - шаги вправо
                                 pyautogui.press('right', presses=4)
                             if checkboxs['cost']:
                                 paste(i['cost'])
                             pyautogui.press('enter')
-                            if shop.text in ['Айсбери', 'ДЕСАН']: # Если одна из этих накладных, то заводися сумма - шаги влево
+                            if shop.text in ['Айсбери', 'Десан'] or format == 'WB': # Если одна из этих накладных, то заводися сумма - шаги влево
                                 pyautogui.press('left', presses=3)
                             if checkboxs['name'] or checkboxs['type']:
                                 pyautogui.press('left', presses=6)

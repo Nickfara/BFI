@@ -12,8 +12,9 @@ from kivymd.uix.label import MDLabel
 from kivymd.uix.menu import MDDropdownMenu
 from kivymd.uix.screen import Screen
 from kivymd.uix.scrollview import ScrollView
-from kivymd.uix.selectioncontrol import MDSwitch as Switch
+from kivymd.uix.selectioncontrol import MDSwitch, MDCheckbox
 from kivymd.uix.textfield import MDTextField
+
 
 from copy import copy
 
@@ -26,7 +27,7 @@ onlyfiles = [f for f in listdir('documents') if isfile(join('documents', f))]
 log = True
 dc.update_item('АВТОКЛИКЕР', '0')
 
-async def async_autoclick(a, b, c, d):
+async def async_autoclick(a, b, c, d, e):
     check = copy(dc.get_item('АВТОКЛИКЕР'))['names']
     if check != '0' and check != '1':
         dc.update_item('АВТОКЛИКЕР', '0')
@@ -35,7 +36,7 @@ async def async_autoclick(a, b, c, d):
         from concurrent.futures import ThreadPoolExecutor
         executor = ThreadPoolExecutor()
         def start_clicker():
-            autoclick.start(a, b, c, check_data=d)
+            autoclick.start(a, b, c, e, check_data=d)
         await loop.run_in_executor(executor, start_clicker)
     else:
         print('Остановка автокликера!')
@@ -95,14 +96,15 @@ class Demo(MDApp):
         logging.info('ИНТЕРФЕЙС: scan_file')
         menu_items = []
         for doc_name in onlyfiles:
-            if doc_name.split('.')[1] in ['json', 'xls', 'xlsx', 'WB']:
-                menu_items.append({
-                    "text": f"{doc_name}",
-                    "on_release": lambda x=f"{doc_name}": self.func_select_doc_active(x),
-                    'theme_text_color': 'Custom',
-                    "text_color": self.color_acent_1,
-                    "md_bg_color": self.color_background_start
-                })
+            if '.' in doc_name:
+                if doc_name.split('.')[1] in ['json', 'xls', 'xlsx', 'WB']:
+                    menu_items.append({
+                        "text": f"{doc_name}",
+                        "on_release": lambda x=f"{doc_name}": self.func_select_doc_active(x),
+                        'theme_text_color': 'Custom',
+                        "text_color": self.color_acent_1,
+                        "md_bg_color": self.color_background_start
+                    })
         return menu_items
 
     def build(self):
@@ -138,28 +140,30 @@ class Demo(MDApp):
         # _______________________________Переключатели
         def switched():
             # ______________________________Переключатели
-            self.switch_name = Switch(width='64', track_color_active=self.color_acent_2,
-                                      thumb_color_inactive=self.color_acent_2,
-                                      thumb_color_active=self.color_background_start)
-            self.switch_name.active = True
-            self.switch_header = Switch(width='64', track_color_active=self.color_acent_2,
+            self.switch_name = MDSwitch(width='64', track_color_active=self.color_acent_2,
                                         thumb_color_inactive=self.color_acent_2,
-                                        thumb_color_active=self.color_background_start, pos=(.8, .5))
+                                        thumb_color_active=self.color_background_start)
+            self.switch_name.active = True
+            self.switch_header = MDSwitch(width='64', track_color_active=self.color_acent_2,
+                                          thumb_color_inactive=self.color_acent_2,
+                                          thumb_color_active=self.color_background_start, pos=(.8, .5))
+            self.checkbox_header = MDCheckbox(size_hint=(None, None), size=(24, 24))
+            self.checkbox_header.pos_hint = {'x': .5, 'y': 0.3}
             self.switch_header.active = True
-            self.switch_type = Switch(size_hint=(None, None), width='10dp', track_color_active=self.color_acent_2,
-                                      thumb_color_inactive=self.color_acent_2,
-                                      thumb_color_active=self.color_background_start)
+            self.switch_type = MDSwitch(size_hint=(None, None), width='10dp', track_color_active=self.color_acent_2,
+                                        thumb_color_inactive=self.color_acent_2,
+                                        thumb_color_active=self.color_background_start)
             self.switch_type.active = True
-            self.switch_count = Switch(size_hint=(None, None), width='10dp', track_color_active=self.color_acent_2,
-                                       thumb_color_inactive=self.color_acent_2,
-                                       thumb_color_active=self.color_background_start)
-            self.switch_cost = Switch(size_hint=(None, None), width='10dp', track_color_active=self.color_acent_2,
-                                      thumb_color_inactive=self.color_acent_2,
-                                      thumb_color_active=self.color_background_start)
-            self.switch_version = Switch(active=False, size_hint=(None, None), width='10dp',
-                                         track_color_active=self.color_background_start,
-                                         track_color_inactive=self.color_background_start,
-                                         thumb_color_inactive=self.color_list, thumb_color_active=self.color_list)
+            self.switch_count = MDSwitch(size_hint=(None, None), width='10dp', track_color_active=self.color_acent_2,
+                                         thumb_color_inactive=self.color_acent_2,
+                                         thumb_color_active=self.color_background_start)
+            self.switch_cost = MDSwitch(size_hint=(None, None), width='10dp', track_color_active=self.color_acent_2,
+                                        thumb_color_inactive=self.color_acent_2,
+                                        thumb_color_active=self.color_background_start)
+            self.switch_version = MDSwitch(active=False, size_hint=(None, None), width='10dp',
+                                           track_color_active=self.color_background_start,
+                                           track_color_inactive=self.color_background_start,
+                                           thumb_color_inactive=self.color_list, thumb_color_active=self.color_list)
             self.switch_version.bind(active=self.func_switch_version)
             # _________________________Текст_Переключателей
             switch_header_text = MDLabel(text='Шапка:', valign="center", halign="right", theme_text_color='Custom',
@@ -182,13 +186,15 @@ class Demo(MDApp):
             switch_cost_layout = BoxLayout(orientation='horizontal')
             switch_version_layout = BoxLayout(orientation='horizontal')
 
-            switch_layouts= {switch_header_layout:(switch_header_text, self.switch_header), switch_name_layout:
+            switch_layouts= {switch_header_layout:(self.checkbox_header, switch_header_text, self.switch_header), switch_name_layout:
                 (switch_name_text, self.switch_name), switch_type_layout: (switch_type_text, self.switch_type),
                 switch_count_layout:(switch_count_text, self.switch_count), switch_cost_layout:
                 (switch_cost_text, self.switch_cost), switch_version_layout:(switch_version_text, self.switch_version)}
             for i in switch_layouts:
                 i.add_widget(switch_layouts[i][0])
                 i.add_widget(switch_layouts[i][1])
+                if len(switch_layouts[i]) >= 3:
+                    i.add_widget(switch_layouts[i][2])
 
             switch_left_layout = BoxLayout(orientation='vertical', padding=(0, 0, 40, 0), size_hint_x=None, width=185,
                                            md_bg_color=self.color_panel)
@@ -281,13 +287,23 @@ class Demo(MDApp):
         self.scroll_layout.clear_widgets()
         if self.btn_select_shop != 'Выбрать поставщика':
             if self.btn_select_shop.text == 'Чек':
-                if self.btn_input_doc_name.text.split('.')[1] == 'json':
+                if self.btn_input_doc_name.text.split('.')[1] in ('json'):
+                    print('ЫПРВЛОРПЫВЛОПРЫЛВП')
                     self.temp = doc(self.btn_select_shop.text, f"documents/{self.btn_input_doc_name.text}")
                     self.doc = self.temp['items']
-                else:
-                    self.doc = self.temp['items']
+
             else:
-                self.doc = doc(self.btn_select_shop.text, f"documents/{self.btn_input_doc_name.text}")
+                self.temp = doc(self.btn_select_shop.text, f"documents/{self.btn_input_doc_name.text}")
+                print(self.temp)
+                if type(self.temp) == dict:
+                    self.doc = self.temp['items']
+                else:
+                    self.doc = self.temp
+                    self.temp = None
+
+            if log: print('Считанная накладная:')
+            if log: print(self.temp if self.temp != None else self.doc)
+
             if self.doc:
                 return
             text = MDLabel(text='Поставщик введён неверно!')
@@ -330,10 +346,13 @@ class Demo(MDApp):
                     self.end_docList.append(temp)
                 self.ind_convert_item += 1
                 self.scroll_layout.clear_widgets()
-                if self.btn_select_shop.text == 'Чек':
+                if self.btn_select_shop.text == 'Чек' or (self.checkbox_header.active and type(self.temp) == dict):
                     list_items_text3 = MDLabel(text=f'Дата: {self.temp["date"]}\n', theme_text_color='Custom',
                                                text_color=self.color_acent_1)
-                    list_items_text3.text += f'\nЧек: {self.temp["check"]}\n\n'
+                    if self.btn_select_shop.text == 'Чек':
+                        list_items_text3.text += f'\nЧек: {self.temp["check"]}\n\n'
+                    else:
+                        list_items_text3.text += f'\n{self.temp["check"]}\n\n'
                     data_layout = BoxLayout(orientation='horizontal', size_hint_y=None, height='120dp')
                     data_layout.add_widget(list_items_text3)
                     self.scroll_layout.add_widget(data_layout)
@@ -378,13 +397,13 @@ class Demo(MDApp):
             checkboxs = {'name': self.switch_name.active, 'type': self.switch_type.active,
                          'count': self.switch_count.active, 'cost': self.switch_cost.active,
                          'header': self.switch_header.active}
-            if self.temp != None and self.btn_select_shop.text == 'Чек':
+            if self.temp != None and (self.btn_select_shop.text == 'Чек' or (self.checkbox_header.active and type(self.temp) == dict)):
                 number = self.temp["check"] if self.btn_input_doc_name.text.split('.')[
-                                                   1] == 'WB' else f'\nЧек: {self.temp["check"]}'
+                                                   1] == 'WB' else (f'\nЧек: {self.temp["check"]}' if self.btn_select_shop.text == 'Чек' else self.temp["check"])
                 info = {'date': self.temp["date"], 'number': number}
             else:
                 info = None
-            asyncio.ensure_future(async_autoclick(self.end_docList, self.btn_select_shop, checkboxs, info))
+            asyncio.ensure_future(async_autoclick(self.end_docList, self.btn_select_shop, checkboxs, info, self.btn_input_doc_name.text.split('.')[1]))
             #Autoclick.start(self.end_docList, self.btn_select_shop, checkboxs, check_data=info)
         except Exception as e:
             self.scroll_layout.clear_widgets()
@@ -597,11 +616,12 @@ class Demo(MDApp):
         if log: print(doc_name)
         if doc_name.capitalize() in self.shops:
             self.btn_select_shop.text = doc_name
-        elif 'check' in doc_name:
+        elif 'check' in doc_name or 'WB' in ''.join(c for c in name.split('.')[1] if c.isalpha()):
             self.btn_select_shop.text = 'Чек'
         if self.btn_input_doc_name.text.split('.')[1] == 'WB':
             if log: print(self.tea_checks)
             self.temp = self.tea_checks[int(name.split('.')[0])]
+            self.doc = self.tea_checks[int(name.split('.')[0])]['items']
 
     # Пустая функция
     def pass_(self, window, key, *args):
@@ -648,7 +668,7 @@ class Demo(MDApp):
                                      on_text_validate=self.func_dialog_enter, text_color_focus=self.color_acent_1,
                                      line_color_focus=self.color_acent_2, hint_text_color_focus=self.color_acent_2)
             self.token_btn = RFIB(icon='key', text="Авторизоваться",
-                                  on_release=lambda x: self.replace_widget(new_widget=self.token),
+                                  on_release=lambda x: self.wb_replace_widget(new_widget=self.token),
                                   size_hint=(.2, .5), text_color='#8D297F', icon_color='#8D297F',
                                   line_color=self.color_panel, font_size=18)
             self.verify = MDLabel(halign="center", size_hint_x=None,
@@ -698,7 +718,7 @@ class Demo(MDApp):
             self.layout_middle = ScrollView(size_hint=(1, 1), pos_hint={'center_x': .5, 'center_y': .5},
                                             do_scroll_x=False)
             self.layout_menu.add_widget(self.layout_middle)
-            self.replace_widget(self.token_btn)
+            self.wb_replace_widget(self.token_btn)
             return self.layout_menu
 
         self.dialog_wb = MDDialog(title='Чеки WildBerries', type="custom", content_cls=sort_(),
@@ -708,7 +728,7 @@ class Demo(MDApp):
     def wb_on_focus(self, value, instance):
         logging.info('ИНТЕРФЕЙС: wb_on_focus')
         if not value:  # Если фокус потерян
-            self.replace_widget(new_widget=self.token_btn)
+            self.wb_replace_widget(new_widget=self.token_btn)
 
     def wb_replace_widget(self, new_widget):
         logging.info('ИНТЕРФЕЙС: wb_replace_widget')
@@ -820,7 +840,7 @@ class Demo(MDApp):
                     self.tea_checks.append(
                         {'date': 'T'.join(check['date'].strip('                        ').split(' ')),
                          'check': check['number'].strip('                        '),
-                         'items': [{'id': 0, 'name': 'Чай пакетированный', 'cost': all_price / all_count,
+                         'items': [{'id': 0, 'name': 'Чай пакетированный', 'cost': all_price,
                                     'count': all_count, 'sum': all_price, 'type': 'шт'}]})
                     onlyfiles.append(f'{ind_check}.WB')
 
