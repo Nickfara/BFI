@@ -61,6 +61,239 @@ def base_push(string):
         f.write(string)
         f.close()
 
+class WB():
+    # Запуск парсера чеков Wildberries
+    def wb_parse(self, instance):
+        logging.info('ИНТЕРФЕЙС: wb_parse')
+
+        def sort_():
+            self.date = MDTextField(hint_text="Дата",
+                                    helper_text_mode="on_focus", helper_text="Последний чек, в формате: 31.01.2024",
+                                    size_hint_x=None, width='120dp',
+                                    halign='left',
+                                    on_text_validate=self.func_dialog_enter,
+                                    text_color_focus=self.color_acent_1, line_color_focus=self.color_acent_2,
+                                    hint_text_color_focus=self.color_acent_2)
+
+            self.get_item = RFB(text="Получить чеки",
+                                on_release=self.wb_get,
+                                halign="right",
+                                text_color=self.color_acent_1, line_color=self.color_acent_2)
+
+            self.save = RFB(text="Сохранить",
+                            on_release=self.wb_save,
+                            halign="left",
+                            text_color=self.color_acent_1, line_color=self.color_acent_2)
+
+            self.token = MDTextField(text=base_get()[0] if base_get() is not None else '',
+                                     hint_text="Токен",
+                                     helper_text="Просто вставь сюда токен",
+                                     helper_text_mode="on_focus",
+                                     size_hint_x=None, width=240,
+                                     halign='left',
+                                     on_text_validate=self.func_dialog_enter, text_color_focus=self.color_acent_1,
+                                     line_color_focus=self.color_acent_2, hint_text_color_focus=self.color_acent_2)
+            self.token_btn = RFIB(icon='key', text="Авторизоваться",
+                                  on_release=lambda x: self.wb_replace_widget(new_widget=self.token),
+                                  size_hint=(.2, .5), text_color='#8D297F', icon_color='#8D297F',
+                                  line_color=self.color_panel, font_size=18)
+            self.verify = MDLabel(halign="center", size_hint_x=None,
+                                  theme_text_color='Custom', text_color=self.color_acent_1)
+            # Наполнение верхнего меню
+            with open('Wildberries_database.txt', 'r'):
+                if base_get() is None:
+                    self.verify.text = 'Введите данные в форму ниже!'
+                else:
+                    self.verify.text = 'Подключено!'
+
+            date_text = base_get()[1].split('T')[0].split('-') if base_get() is not None else ''
+            date_text = date_text[2] + '.' + date_text[1] + '.' + date_text[0] if base_get() is not None else ''
+            self.date.text = date_text
+            self.token.bind(focus=self.wb_on_focus)
+
+            if WB_Pars.auth(self.token.text).ok:
+                self.token_btn.text = 'Подключено!'
+            else:
+                self.token_btn.text = 'Авторизоваться!'
+
+            # Верхнее меню - Лэйауты
+            self.layout_top_wb = MDBoxLayout(orientation='vertical')
+            for i in (self.token_btn, self.date, self.verify, self.save):
+                self.layout_top_wb.add_widget(i)
+            self.layout_top_wb.size_hint_y = None
+            self.layout_top_wb.bind(minimum_height=self.layout_top_wb.setter('height'))
+
+            # Общее наполнение лэйаутов
+            layout_buttons = MDBoxLayout(orientation='horizontal', )
+            layout_buttons.add_widget(MDLabel())
+            layout_buttons.add_widget(self.get_item)
+            layout_buttons.size_hint_y = None
+            layout_buttons.bind(minimum_height=layout_buttons.setter('height'))
+
+            layout_main = MDBoxLayout(orientation='vertical', md_bg_color=self.color_background_start)
+            layout_verify = MDBoxLayout(orientation='horizontal', size_hint_y=None, height=20)
+            layout_verify.add_widget(MDLabel())
+
+            for i in (layout_verify, self.layout_top_wb, layout_buttons):
+                layout_main.add_widget(i)
+
+            layout_main.size_hint_y = None
+            layout_main.bind(minimum_height=layout_main.setter('height'))
+            self.layout_menu = MDBoxLayout(orientation='vertical', size_hint_y=None, height=500)
+            self.layout_menu.add_widget(layout_main)
+            self.layout_middle = ScrollView(size_hint=(1, 1), pos_hint={'center_x': .5, 'center_y': .5},
+                                            do_scroll_x=False)
+            self.layout_menu.add_widget(self.layout_middle)
+            self.wb_replace_widget(self.token_btn)
+            return self.layout_menu
+
+        self.dialog_wb = MDDialog(title='Чеки WildBerries', type="custom", content_cls=sort_(),
+                                  md_bg_color=self.color_background_start)
+        self.dialog_wb.open()
+
+    def wb_on_focus(self, value, instance):
+        logging.info('ИНТЕРФЕЙС: wb_on_focus')
+        if not value:  # Если фокус потерян
+            self.wb_replace_widget(new_widget=self.token_btn)
+
+    def wb_replace_widget(self, new_widget):
+        logging.info('ИНТЕРФЕЙС: wb_replace_widget')
+        self.token.focus = True
+        self.layout_top_wb.clear_widgets()
+        self.layout_top_wb.add_widget(new_widget)
+        self.layout_top_wb.add_widget(self.date)
+        self.layout_top_wb.add_widget(self.verify)
+        self.layout_top_wb.add_widget(self.save)
+
+    def wb_save(self, instance):
+        logging.info('ИНТЕРФЕЙС: wb_save')
+        date = self.date.text
+        if len(date) == 10:
+            if date[2] == '.' and date[5] == '.':
+                date = date.split('.')
+                if len(date[0]) == 2 and len(date[1]) == 2 and len(date[2]) == 4:
+                    try:
+                        if 32 > int(date[0]) > 0 and 13 > int(date[1]) > 0 and 2050 > int(date[2]) > 2023:
+                            string = str(self.token.text) + '|' + f'{date[2]}-{date[1]}-{date[0]}T21:58:00.000'
+                            if WB_Pars.auth(self.token.text).ok:
+                                base_push(string)
+                                self.verify.text = ''
+                            else:
+                                self.verify.text = 'Ошибка авторизации! Токен недействителен!'
+                                if log: print(self.token.text)
+                                if log: print(WB_Pars.auth(self.token.text).ok)
+                                if log: print(WB_Pars.auth(self.token.text))
+                        else:
+                            self.verify.text = 'Указана несуществующая дата!'
+                    except Exception as e:
+                        self.verify.text = 'Указаны не только цифры в дате!'
+                        if log: print(date)
+                        if log: print(e)
+                else:
+                    self.verify.text = 'Длинна одного параметра даты не правильная!'
+            else:
+                self.verify.text = 'Не найдены точки!'
+        else:
+            self.verify.text = 'Длинна даты не правильная!'
+
+    def wb_get(self, instance):
+        logging.info('ИНТЕРФЕЙС: wb_get')
+        layout_receipts = MDBoxLayout(orientation='vertical', padding=20)
+        layout_receipts.size_hint_y = None
+        layout_receipts.bind(minimum_height=layout_receipts.setter('height'))
+        if base_get() is not None:
+            checks = WB_Pars.get_info(base_get()[0], base_get()[1])
+            self.tea_checks = []
+
+            if len(checks) > 0:
+                ind_check = 0
+                index_check_WB = 0
+                remove_mass = []
+                for i in onlyfiles:  # Поиск уже добавленых чеков
+                    if i.find('WB') != -1:
+                        remove_mass.append(i)
+                    index_check_WB += 1
+                for i in remove_mass:  # Удаление добавленых чеков
+                    onlyfiles.remove(i)
+                for check in checks:  # Создание чеков
+                    line = MDBoxLayout(md_bg_color=self.color_background_start, size_hint_y=None, height=30)
+                    layout_receipt = MDBoxLayout(orientation='vertical', md_bg_color=self.color_list)
+                    layout_info = MDBoxLayout(orientation='vertical', size_hint_y=None, height=60)
+                    layout_itog = MDBoxLayout(orientation='horizontal')
+                    layout_texts = MDBoxLayout(orientation='horizontal')
+
+                    pos = 0
+                    all_count = 0
+                    all_price = 0
+                    # Конвертация чая
+                    for i in check['check']:
+                        pos += 1
+                        all_price += float(i['cтоимость'])
+                        if i['название'].find('200') != -1:
+                            name_tea = 'Чай 200шт.'
+                            all_count += 200 * int(i['количество'])
+                        elif i['название'].find('100') != -1:
+                            name_tea = 'Чай 100шт.'
+                            all_count += 100 * int(i['количество'])
+                        else:
+                            name_tea = str(i['название'].strip('                                            '))
+
+                        one_receipt = MDBoxLayout(orientation='horizontal', size_hint_y=None, height=40)
+                        strings1 = {str(pos) + '. ': 'right', name_tea: 'left',
+                                    '     ' + str(i['цена за шт']) + ' Х ' + str(i['количество']) + ' = ': 'right',
+                                    str(''.join(i['cтоимость'].split(' '))): 'left'}
+                        for i2 in strings1:
+                            one_receipt.add_widget(MDLabel(text=i2, halign="right", size_hint_x=None))
+                        layout_receipt.add_widget(one_receipt)
+
+                    strings_texts = {'': 'left', 'Название:': 'left', 'Цена:': "right", 'Количество:': "center",
+                                     'Сумма:': "left"}
+                    strings_itog = {'Всего: ': 'right', (str(all_count) + 'шт.'): 'left', '': 'right',
+                                    'Итого: ': 'right', str(all_price) + '₽': 'left'}
+
+                    for i2 in (str(check['date']) + '    ', str(check['number']) + '    '):
+                        layout_info.add_widget(MDLabel(text=i2, halign="right", ))
+
+                    for i2 in strings_texts:
+                        layout_texts.add_widget(MDLabel(text=i2, halign=strings_texts[i2], size_hint_x=None))
+
+                    for i2 in strings_itog:
+                        layout_itog.add_widget(MDLabel(text=i2, halign=strings_itog[i2], size_hint_x=None))
+
+                    layout_receipt.add_widget(layout_info)
+                    layout_receipt.add_widget(layout_texts)
+
+                    self.tea_checks.append(
+                        {'date': 'T'.join(check['date'].strip('                        ').split(' ')),
+                         'check': check['number'].strip('                        '),
+                         'items': [{'id': 0, 'name': 'Чай пакетированный', 'cost': all_price,
+                                    'count': all_count, 'sum': all_price, 'type': 'шт'}]})
+                    onlyfiles.append(f'{ind_check}.WB')
+
+                    # Нормализация размеров лайаутов
+                    layout_receipt.size_hint_y = None
+                    layout_receipt.bind(minimum_height=layout_receipt.setter('height'))
+                    layout_texts.size_hint_y = None
+                    layout_texts.bind(minimum_height=layout_receipt.setter('height'))
+                    layout_itog.size_hint_y = None
+                    layout_itog.bind(minimum_height=layout_receipt.setter('height'))
+
+                    layout_receipt.add_widget(layout_itog)
+                    layout_receipts.add_widget(layout_receipt)
+                    layout_receipts.add_widget(line)
+                    ind_check += 1
+            else:
+                layout_receipts.clear_widgets()
+                layout_receipts.add_widget(MDLabel(text='Незаведёных чеков нет!'))
+        else:
+            layout_receipts.clear_widgets()
+            layout_receipts.add_widget(MDLabel(text='Сначала вам нужно указать токен и дату!'))
+
+        self.layout_middle.clear_widgets()
+        self.layout_middle.add_widget(layout_receipts)
+        self.layout_menu.remove_widget(self.layout_middle)
+        self.layout_menu.add_widget(self.layout_middle)
+
 
 class Demo(MDApp):
     def __init__(self):  # Переменные класса
@@ -639,235 +872,7 @@ class Demo(MDApp):
 
     # Запуск парсера чеков Wildberries
     def wb_parse(self, instance):
-        logging.info('ИНТЕРФЕЙС: wb_parse')
-        def sort_():
-            self.date = MDTextField(hint_text="Дата",
-                                    helper_text_mode="on_focus", helper_text="Последний чек, в формате: 31.01.2024",
-                                    size_hint_x=None, width='120dp',
-                                    halign='left',
-                                    on_text_validate=self.func_dialog_enter,
-                                    text_color_focus=self.color_acent_1, line_color_focus=self.color_acent_2,
-                                    hint_text_color_focus=self.color_acent_2)
-
-            self.get_item = RFB(text="Получить чеки",
-                                on_release=self.wb_get,
-                                halign="right",
-                                text_color=self.color_acent_1, line_color=self.color_acent_2)
-
-            self.save = RFB(text="Сохранить",
-                            on_release=self.wb_save,
-                            halign="left",
-                            text_color=self.color_acent_1, line_color=self.color_acent_2)
-
-            self.token = MDTextField(text=base_get()[0] if base_get() is not None else '',
-                                     hint_text="Токен",
-                                     helper_text="Просто вставь сюда токен",
-                                     helper_text_mode="on_focus",
-                                     size_hint_x=None, width=240,
-                                     halign='left',
-                                     on_text_validate=self.func_dialog_enter, text_color_focus=self.color_acent_1,
-                                     line_color_focus=self.color_acent_2, hint_text_color_focus=self.color_acent_2)
-            self.token_btn = RFIB(icon='key', text="Авторизоваться",
-                                  on_release=lambda x: self.wb_replace_widget(new_widget=self.token),
-                                  size_hint=(.2, .5), text_color='#8D297F', icon_color='#8D297F',
-                                  line_color=self.color_panel, font_size=18)
-            self.verify = MDLabel(halign="center", size_hint_x=None,
-                                  theme_text_color='Custom', text_color=self.color_acent_1)
-            # Наполнение верхнего меню
-            with open('Wildberries_database.txt', 'r'):
-                if base_get() is None:
-                    self.verify.text = 'Введите данные в форму ниже!'
-                else:
-                    self.verify.text = 'Подключено!'
-
-            date_text = base_get()[1].split('T')[0].split('-') if base_get() is not None else ''
-            date_text = date_text[2] + '.' + date_text[1] + '.' + date_text[0] if base_get() is not None else ''
-            self.date.text = date_text
-            self.token.bind(focus=self.wb_on_focus)
-
-            if WB_Pars.auth(self.token.text).ok:
-                self.token_btn.text = 'Подключено!'
-            else:
-                self.token_btn.text = 'Авторизоваться!'
-
-            # Верхнее меню - Лэйауты
-            self.layout_top_wb = MDBoxLayout(orientation='vertical')
-            for i in (self.token_btn, self.date, self.verify, self.save):
-                self.layout_top_wb.add_widget(i)
-            self.layout_top_wb.size_hint_y = None
-            self.layout_top_wb.bind(minimum_height=self.layout_top_wb.setter('height'))
-
-            # Общее наполнение лэйаутов
-            layout_buttons = MDBoxLayout(orientation='horizontal', )
-            layout_buttons.add_widget(MDLabel())
-            layout_buttons.add_widget(self.get_item)
-            layout_buttons.size_hint_y = None
-            layout_buttons.bind(minimum_height=layout_buttons.setter('height'))
-
-            layout_main = MDBoxLayout(orientation='vertical', md_bg_color=self.color_background_start)
-            layout_verify = MDBoxLayout(orientation='horizontal', size_hint_y=None, height=20)
-            layout_verify.add_widget(MDLabel())
-
-            for i in (layout_verify, self.layout_top_wb, layout_buttons):
-                layout_main.add_widget(i)
-
-            layout_main.size_hint_y = None
-            layout_main.bind(minimum_height=layout_main.setter('height'))
-            self.layout_menu = MDBoxLayout(orientation='vertical', size_hint_y=None, height=500)
-            self.layout_menu.add_widget(layout_main)
-            self.layout_middle = ScrollView(size_hint=(1, 1), pos_hint={'center_x': .5, 'center_y': .5},
-                                            do_scroll_x=False)
-            self.layout_menu.add_widget(self.layout_middle)
-            self.wb_replace_widget(self.token_btn)
-            return self.layout_menu
-
-        self.dialog_wb = MDDialog(title='Чеки WildBerries', type="custom", content_cls=sort_(),
-                                  md_bg_color=self.color_background_start)
-        self.dialog_wb.open()
-
-    def wb_on_focus(self, value, instance):
-        logging.info('ИНТЕРФЕЙС: wb_on_focus')
-        if not value:  # Если фокус потерян
-            self.wb_replace_widget(new_widget=self.token_btn)
-
-    def wb_replace_widget(self, new_widget):
-        logging.info('ИНТЕРФЕЙС: wb_replace_widget')
-        self.token.focus = True
-        self.layout_top_wb.clear_widgets()
-        self.layout_top_wb.add_widget(new_widget)
-        self.layout_top_wb.add_widget(self.date)
-        self.layout_top_wb.add_widget(self.verify)
-        self.layout_top_wb.add_widget(self.save)
-
-    def wb_save(self, instance):
-        logging.info('ИНТЕРФЕЙС: wb_save')
-        date = self.date.text
-        if len(date) == 10:
-            if date[2] == '.' and date[5] == '.':
-                date = date.split('.')
-                if len(date[0]) == 2 and len(date[1]) == 2 and len(date[2]) == 4:
-                    try:
-                        if 32 > int(date[0]) > 0 and 13 > int(date[1]) > 0 and 2050 > int(date[2]) > 2023:
-                            string = str(self.token.text) + '|' + f'{date[2]}-{date[1]}-{date[0]}T21:58:00.000'
-                            if WB_Pars.auth(self.token.text).ok:
-                                base_push(string)
-                                self.verify.text = ''
-                            else:
-                                self.verify.text = 'Ошибка авторизации! Токен недействителен!'
-                                if log: print(self.token.text)
-                                if log: print(WB_Pars.auth(self.token.text).ok)
-                                if log: print(WB_Pars.auth(self.token.text))
-                        else:
-                            self.verify.text = 'Указана несуществующая дата!'
-                    except Exception as e:
-                        self.verify.text = 'Указаны не только цифры в дате!'
-                        if log: print(date)
-                        if log: print(e)
-                else:
-                    self.verify.text = 'Длинна одного параметра даты не правильная!'
-            else:
-                self.verify.text = 'Не найдены точки!'
-        else:
-            self.verify.text = 'Длинна даты не правильная!'
-
-    def wb_get(self, instance):
-        logging.info('ИНТЕРФЕЙС: wb_get')
-        layout_receipts = MDBoxLayout(orientation='vertical', padding=20)
-        layout_receipts.size_hint_y = None
-        layout_receipts.bind(minimum_height=layout_receipts.setter('height'))
-        if base_get() is not None:
-            checks = WB_Pars.get_info(base_get()[0], base_get()[1])
-            self.tea_checks = []
-
-            if len(checks) > 0:
-                ind_check = 0
-                index_check_WB = 0
-                remove_mass = []
-                for i in onlyfiles:  # Поиск уже добавленых чеков
-                    if i.find('WB') != -1:
-                        remove_mass.append(i)
-                    index_check_WB += 1
-                for i in remove_mass:  # Удаление добавленых чеков
-                    onlyfiles.remove(i)
-                for check in checks:  # Создание чеков
-                    line = MDBoxLayout(md_bg_color=self.color_background_start, size_hint_y=None, height=30)
-                    layout_receipt = MDBoxLayout(orientation='vertical', md_bg_color=self.color_list)
-                    layout_info = MDBoxLayout(orientation='vertical', size_hint_y=None, height=60)
-                    layout_itog = MDBoxLayout(orientation='horizontal')
-                    layout_texts = MDBoxLayout(orientation='horizontal')
-
-                    pos = 0
-                    all_count = 0
-                    all_price = 0
-                    # Конвертация чая
-                    for i in check['check']:
-                        pos += 1
-                        all_price += float(i['cтоимость'])
-                        if i['название'].find('200') != -1:
-                            name_tea = 'Чай 200шт.'
-                            all_count += 200 * int(i['количество'])
-                        elif i['название'].find('100') != -1:
-                            name_tea = 'Чай 100шт.'
-                            all_count += 100 * int(i['количество'])
-                        else:
-                            name_tea = str(i['название'].strip('                                            '))
-
-                        one_receipt = MDBoxLayout(orientation='horizontal', size_hint_y=None, height=40)
-                        strings1 = {str(pos) + '. ': 'right', name_tea: 'left',
-                                    '     ' + str(i['цена за шт']) + ' Х ' + str(i['количество']) + ' = ': 'right',
-                                    str(''.join(i['cтоимость'].split(' '))): 'left'}
-                        for i2 in strings1:
-                            one_receipt.add_widget(MDLabel(text=i2, halign="right", size_hint_x=None))
-                        layout_receipt.add_widget(one_receipt)
-
-                    strings_texts = {'': 'left', 'Название:': 'left', 'Цена:': "right", 'Количество:': "center",
-                                     'Сумма:': "left"}
-                    strings_itog = {'Всего: ': 'right', (str(all_count) + 'шт.'): 'left', '': 'right',
-                                    'Итого: ': 'right', str(all_price) + '₽': 'left'}
-
-                    for i2 in (str(check['date']) + '    ', str(check['number']) + '    '):
-                        layout_info.add_widget(MDLabel(text=i2, halign="right", ))
-
-                    for i2 in strings_texts:
-                        layout_texts.add_widget(MDLabel(text=i2, halign=strings_texts[i2], size_hint_x=None))
-
-                    for i2 in strings_itog:
-                        layout_itog.add_widget(MDLabel(text=i2, halign=strings_itog[i2], size_hint_x=None))
-
-                    layout_receipt.add_widget(layout_info)
-                    layout_receipt.add_widget(layout_texts)
-
-                    self.tea_checks.append(
-                        {'date': 'T'.join(check['date'].strip('                        ').split(' ')),
-                         'check': check['number'].strip('                        '),
-                         'items': [{'id': 0, 'name': 'Чай пакетированный', 'cost': all_price,
-                                    'count': all_count, 'sum': all_price, 'type': 'шт'}]})
-                    onlyfiles.append(f'{ind_check}.WB')
-
-                    # Нормализация размеров лайаутов
-                    layout_receipt.size_hint_y = None
-                    layout_receipt.bind(minimum_height=layout_receipt.setter('height'))
-                    layout_texts.size_hint_y = None
-                    layout_texts.bind(minimum_height=layout_receipt.setter('height'))
-                    layout_itog.size_hint_y = None
-                    layout_itog.bind(minimum_height=layout_receipt.setter('height'))
-
-                    layout_receipt.add_widget(layout_itog)
-                    layout_receipts.add_widget(layout_receipt)
-                    layout_receipts.add_widget(line)
-                    ind_check += 1
-            else:
-                layout_receipts.clear_widgets()
-                layout_receipts.add_widget(MDLabel(text='Незаведёных чеков нет!'))
-        else:
-            layout_receipts.clear_widgets()
-            layout_receipts.add_widget(MDLabel(text='Сначала вам нужно указать токен и дату!'))
-
-        self.layout_middle.clear_widgets()
-        self.layout_middle.add_widget(layout_receipts)
-        self.layout_menu.remove_widget(self.layout_middle)
-        self.layout_menu.add_widget(self.layout_middle)
-
+        WB.wb_parse()
 
 # Используем эту функцию для запуска цикла событий Kivy с интеграцией asyncio
 def run_async():
