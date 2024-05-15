@@ -4,38 +4,6 @@ import logging
 
 log = True
 
-def check(doc): # Сканер json чека
-    logging.info('СКАН: check')
-    check = None
-    with open(doc, 'r', encoding='utf-8') as json_file:
-        if doc.split('.')[1] == 'json':
-            data = json.load(json_file)
-            items = data['items']
-            if log: print(items)
-            filter_items = []
-            id = 1
-            for i in items: # Фильтрация обьектов
-                temp = 0
-                e = 0
-                while e < len(filter_items):
-                    if i['name'] == filter_items[e]['name']:
-                        filter_items[e]['count'] += i['quantity']
-                        filter_items[e]['sum'] += i['sum']/100
-                        filter_items[e]['cost'] = filter_items[e]['sum'] / filter_items[e]['count']
-                        temp = 1
-                    e += 1
-
-                if temp == 0:
-                    filter_items.append({'id': id, 'name': i['name'], 'cost': i['price']/100,
-                                     'count': i['quantity'], 'sum': i['sum']/100, 'type': 'шт'})
-                    id += 1
-
-            check = {'date': data['dateTime'], 'check': data['requestNumber'], 'items': filter_items, }
-            return check
-        else:
-            return False
-
-
 def hat(worksheet, i):
     i2 = 0
     find1 = False
@@ -105,7 +73,11 @@ def fix(item, worksheet, i, ii, index, shop):
                     break
             else:
                 if log: print('2 ИСПРАВЛЕНО КОЛИЧЕСТВО!')
-                item['count'] = str(worksheet.cell_value(i, index[1] + ii + 1 if x == 0 else 2))
+                if log: print('COUNT: ' + str(item['count']))
+                new_id = index[1] + ii + (1 if x == 0 else 2)
+                if log: print('new_id: ' + str(new_id))
+                item['count'] = str(worksheet.cell_value(i, new_id))
+                if log: print('COUNT: ' + str(item['count']))
                 if item['count'].find(' ') != -1:
                     item['count'] = ','.join(item['count'].split(' '))
                 if x == 2: break
@@ -127,6 +99,8 @@ def fix(item, worksheet, i, ii, index, shop):
 
     if item['cost'].find(' ') != -1:
         item['cost'] = '.'.join(item['cost'].split(' '))
+    if item['cost'].find(',') != -1:
+        item['cost'] = '.'.join(item['cost'].split(','))
 
     if log: print('COST2: ' + str(item['cost']))
 
@@ -163,8 +137,34 @@ def fix(item, worksheet, i, ii, index, shop):
                 if len_cost == 3:
                     item['cost'] = str(worksheet.cell_value(i, index[3] + ii + 2))
                     item['cost'] = '.'.join(item['cost'].split(' '))
+    else:
+        print('Поиск ячейки цены')
+        print('COST = ' + str(item['cost']))
+        print('COST = ' + str(len(item['cost'])))
+        for li in range(0, 4):
+            if item['cost'].find('.') != -1:
+                if len(item['cost'].split('.')[1]) == 3:
+                    print('ячейка это цена')
+                    item['cost'] = str(worksheet.cell_value(i, index[3] + ii + li))
+                    if item['cost'].find(' ') != -1:
+                        item['cost'] = '.'.join(item['cost'].split(' '))
+                    if item['cost'].find(',') != -1:
+                        item['cost'] = '.'.join(item['cost'].split(','))
+                    if len(item['cost'].split('.')[1]) == 2:
+                        print('Ячейка с ценой найдена!')
+                        break
+            if len(item['cost']) < 2:
+                print('Строка пустая')
+                item['cost'] = str(worksheet.cell_value(i, index[3] + ii + li + 2))
+                if item['cost'].find(' ') != -1:
+                    item['cost'] = '.'.join(item['cost'].split(' '))
+                if item['cost'].find(',') != -1:
+                    item['cost'] = '.'.join(item['cost'].split(','))
+                if item['cost'].find('.') != -1:
+                    if len(item['cost'].split('.')[1]) == 2:
+                        break
 
-
+    if log: print('COST3: ' + str(item['cost']))
     if str(item['cost']).find(',') != -1:
         item['cost'] = item['cost'].split(',')
         item['cost'] = '.'.join(item['cost'])
@@ -179,18 +179,50 @@ def fix(item, worksheet, i, ii, index, shop):
     return item
 
 
-def doc(shop, doc):
+def check_(doc_): # Сканер json чека
+    logging.info('СКАН: check')
+    check = None
+    with open(doc_, 'r', encoding='utf-8') as json_file:
+        if doc_.split('.')[1] == 'json':
+            data = json.load(json_file)
+            items = data['items']
+            if log: print(items)
+            filter_items = []
+            id = 1
+            for i in items: # Фильтрация обьектов
+                temp = 0
+                e = 0
+                while e < len(filter_items):
+                    if i['name'] == filter_items[e]['name']:
+                        filter_items[e]['count'] += i['quantity']
+                        filter_items[e]['sum'] += i['sum']/100
+                        filter_items[e]['cost'] = filter_items[e]['sum'] / filter_items[e]['count']
+                        temp = 1
+                    e += 1
+
+                if temp == 0:
+                    filter_items.append({'id': id, 'name': i['name'], 'cost': i['price']/100,
+                                     'count': i['quantity'], 'sum': i['sum']/100, 'type': 'шт'})
+                    id += 1
+
+            check = {'date': data['dateTime'], 'check': data['requestNumber'], 'items': filter_items, }
+            return check
+        else:
+            return False
+
+
+def doc(shop, doc_):
     logging.info('СКАН: doc')
     import xlrd
     items = []
     # Open the Workbook
     if shop == 'Чек':
-        return check(doc)
+        return check_(doc_)
     else:
         if shop == 'КофП':
             index = [0, 1, 2, 3]
         elif shop == 'Коф':
-            index = [0, 8, 4, 9]
+            index = [0, 8, 2, 9]
         elif shop == 'Метро':
             index = [0, 3, 2, 4]
         elif shop == 'Матушка':
@@ -202,7 +234,7 @@ def doc(shop, doc):
         elif shop == 'Юнит':
             index = [0, 8, 2, 9]
         elif shop == 'Выпечка':
-            index = [0, 6, 2, 10]
+            index = [0, 8, 2, 10]
         elif shop == 'Десан':
             index = [0, 4, 3, 10]
         elif shop == 'Арома':
@@ -210,9 +242,9 @@ def doc(shop, doc):
         else:
             return False
         try:
-            if doc.split('.')[1] in ['xls', 'xlsx']:
+            if doc_.split('.')[1] in ['xls', 'xlsx']:
                 if log: print('Чтение XLS')
-                workbook = xlrd.open_workbook(doc)
+                workbook = xlrd.open_workbook(doc_)
                 worksheet = workbook.sheet_by_index(0)
                 if log: print(shop)
                 id = 1
@@ -236,11 +268,14 @@ def doc(shop, doc):
                                 ii += 1
 
                         temp_Name = str(worksheet.cell_value(i, index[0] + ii))
-                        print(temp_Type)
-
+                        print(temp_Name)
+                        print(index[0] + ii)
+                        print(ii)
                         if len(temp_Name) < 4:
+                            print(temp_Name)
                             temp_Name = str(worksheet.cell_value(i, index[0] + ii - 1))
                             if len(temp_Name) < 4:
+                                print(temp_Name)
                                 temp_Name = str(worksheet.cell_value(i, index[0] + ii - 2))
 
                         if log: print('\n\nКоррекция сдвига на: ' + str(ii))
