@@ -4,17 +4,24 @@ link_receipts = 'https://www.wildberries.ru/webapi/lk/receipts/data?count=35'
 last_date_g = '2023-12-1T21:58:00.000'
 token = 'eyJhbGciOiJSUzI1NiIsInR5cCI6IkpXVCJ9.eyJpYXQiOjE3MDY3ODE3OTIsInZlcnNpb24iOjIsInVzZXIiOiIxNDM2NzY0MyIsInNoYXJkX2tleSI6IjEyIiwiY2xpZW50X2lkIjoid2IiLCJzZXNzaW9uX2lkIjoiNGRjMThhMWEzMGJkNDZmYThmNTQyZWIzOWM3MTk3ZDUiLCJ1c2VyX3JlZ2lzdHJhdGlvbl9kdCI6MTY3NDIxNzc0MiwidmFsaWRhdGlvbl9rZXkiOiI2NTYwMzU3OTYxYzY1MWY0NjEyZmQwY2EwMDIzZTE3ZjEwMWRkMWQ3YmYzMjY4MDZlN2Q0OTk2OTQzYzcyNjQ2IiwicGhvbmUiOiJzS0xlMXBEcTJJZDZBWW4vYjl1aW1RPT0ifQ.k2TTVOgllzbx_uJc7TfyhntmfHsjD4-L5bn_Affj4CVzG1XwUUWOQg2cG59k09B6v_HLEL1YYFECoVfJ-bqaY7e78YRE6VjLzNvoZWKtgj7lEKbuquOtmZ-tKtI5jO-8hUak3-rMh0jSHvjYoVamg7ymwB-llDbjoqd5Uu0E6ubmXAmXmYkCu68Nud3tuxXFsCB63q9163HvawgEyrbfLnpvT_3oAanJHkO2RTA58RddYqD-7YKIVxnpytK4pShw8ga_plvH-eN1IkrTfyH9mgBqtXK_d29PT9q28FgneslIw66LMde9Oog8idc1b0ygvb9g2Ff61siMw8vsqcDTPA'
 
+
 def auth(token):
+    logging.info('WB: \033[45mauth\033[0m')
+    print('\033[45m')
     import requests
     s = requests.Session()  # Создание сессии
     s.headers.update(
         {'User-Agent': 'okhttp/5.3.1'})  # Заголовок с данными
     s.headers.update({'Authorization': 'Bearer {}'.format(token)})
     response = s.post(link_receipts)
+    print('Функция WB завершена')
+    print('\033[0m')
     return response
 
 
 def get_info(token, last_date_g):
+    logging.info('WB: \033[45mget_info\033[0m')
+    print('\033[45m')
     print('Ожидайте примерно 15 секунд!')
     import requests
     import datetime
@@ -117,10 +124,15 @@ def get_info(token, last_date_g):
             tea_receipts.append({'check': check, 'date': tea_info[0].split('<')[0], 'number': tea_info[1]})
 
     tea_receipts.reverse()
+    print('Функция WB завершена')
+    print('\033[0m')
     return tea_receipts
 
+
 def print_checks():
-    checks = get_info()
+    logging.info('WB: \033[45mprint_checks\033[0m')
+    print('\033[45m')
+    checks = get_info(token, last_date_g)
     if len(checks) > 0:
         for check in checks:
             print('\n\n______________________________________________________________________________________________________')
@@ -139,3 +151,5 @@ def print_checks():
                     print('\n_________________')
     else:
         print('Незаведёных чеков нет!')
+    print('Функция WB завершена')
+    print('\033[0m')

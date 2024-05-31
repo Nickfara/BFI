@@ -1,5 +1,6 @@
-import logging
 import asyncio
+import logging
+from copy import copy
 from os import listdir
 from os.path import isfile, join
 
@@ -15,19 +16,16 @@ from kivymd.uix.scrollview import ScrollView
 from kivymd.uix.selectioncontrol import MDSwitch, MDCheckbox
 from kivymd.uix.textfield import MDTextField
 
-
-from copy import copy
-
-import Database_functions
 import Database_connections as dc
-import autoclick
+import Database_functions
 import Wildberries_parser as WB_Pars
+import autoclick
 
-onlyfiles = [f for f in listdir('documents') if isfile(join('documents', f))]
+
 log = True
 dc.update_item('АВТОКЛИКЕР', '0')
 
-async def async_autoclick(a, b, c, d, e):
+async def async_autoclick(a, b, c, d, e, f):
     check = copy(dc.get_item('АВТОКЛИКЕР'))['names']
     if check != '0' and check != '1':
         dc.update_item('АВТОКЛИКЕР', '0')
@@ -35,8 +33,10 @@ async def async_autoclick(a, b, c, d, e):
         loop = asyncio.get_event_loop()
         from concurrent.futures import ThreadPoolExecutor
         executor = ThreadPoolExecutor()
+
         def start_clicker():
-            autoclick.start(a, b, c, e, check_data=d)
+            autoclick.start(a, b, c, e, f, check_data=d)
+
         await loop.run_in_executor(executor, start_clicker)
     else:
         print('Остановка автокликера!')
@@ -66,6 +66,8 @@ class Demo(MDApp):
     def __init__(self):  # Переменные класса
         super().__init__()
         # Оформление
+        self.teafiles = []
+        self.onlyfiles = [] # Файлы документов
         self.color_acent_1 = '#fefefe'
         self.color_acent_2 = '#fe433e'
         self.color_panel = '#272a2f'
@@ -94,8 +96,12 @@ class Demo(MDApp):
 
     def scan_file(self):
         logging.info('ИНТЕРФЕЙС: scan_file')
+        self.onlyfiles = [f for f in listdir('documents') if isfile(join('documents', f))]
+
+        for i in self.teafiles:
+            self.onlyfiles.append(i)
         menu_items = []
-        for doc_name in onlyfiles:
+        for doc_name in self.onlyfiles:
             if '.' in doc_name:
                 if doc_name.split('.')[1] in ['json', 'xls', 'xlsx', 'WB']:
                     menu_items.append({
@@ -108,7 +114,6 @@ class Demo(MDApp):
         return menu_items
 
     def build(self):
-        logging.info('ИНТЕРФЕЙС: build')
         logging.info('ИНТЕРФЕЙС: build')
 
         # ______________________________Выбор поставщика
@@ -154,6 +159,9 @@ class Demo(MDApp):
                                         thumb_color_inactive=self.color_acent_2,
                                         thumb_color_active=self.color_background_start)
             self.switch_type.active = True
+            self.checkbox_type = MDCheckbox(size_hint=(None, None), size=(24, 24))
+            self.checkbox_type.pos_hint = {'x': .5, 'y': 0.3}
+
             self.switch_count = MDSwitch(size_hint=(None, None), width='10dp', track_color_active=self.color_acent_2,
                                          thumb_color_inactive=self.color_acent_2,
                                          thumb_color_active=self.color_background_start)
@@ -179,22 +187,13 @@ class Demo(MDApp):
             switch_version_text = MDLabel(text='Режим:', valign="center", halign="right", theme_text_color='Custom',
                                           text_color=self.color_acent_1)
 
-            switch_header_layout = BoxLayout(orientation='horizontal')
-            switch_name_layout = BoxLayout(orientation='horizontal')
-            switch_type_layout = BoxLayout(orientation='horizontal')
-            switch_count_layout = BoxLayout(orientation='horizontal')
-            switch_cost_layout = BoxLayout(orientation='horizontal')
-            switch_version_layout = BoxLayout(orientation='horizontal')
-
-            switch_layouts= {switch_header_layout:(self.checkbox_header, switch_header_text, self.switch_header), switch_name_layout:
-                (switch_name_text, self.switch_name), switch_type_layout: (switch_type_text, self.switch_type),
-                switch_count_layout:(switch_count_text, self.switch_count), switch_cost_layout:
-                (switch_cost_text, self.switch_cost), switch_version_layout:(switch_version_text, self.switch_version)}
-            for i in switch_layouts:
-                i.add_widget(switch_layouts[i][0])
-                i.add_widget(switch_layouts[i][1])
-                if len(switch_layouts[i]) >= 3:
-                    i.add_widget(switch_layouts[i][2])
+            # Структура лэйаутов
+            switch_layouts = {BoxLayout(orientation='horizontal'): (switch_name_text, self.switch_name),
+                              BoxLayout(orientation='horizontal'): (self.checkbox_type, switch_type_text, self.switch_type),
+                              BoxLayout(orientation='horizontal'): (self.checkbox_header, switch_header_text, self.switch_header),
+                              BoxLayout(orientation='horizontal'): (switch_count_text, self.switch_count),
+                              BoxLayout(orientation='horizontal'): (switch_cost_text, self.switch_cost),
+                              BoxLayout(orientation='horizontal'): (switch_version_text, self.switch_version)}
 
             switch_left_layout = BoxLayout(orientation='vertical', padding=(0, 0, 40, 0), size_hint_x=None, width=185,
                                            md_bg_color=self.color_panel)
@@ -204,11 +203,18 @@ class Demo(MDApp):
                                           width=(switch_left_layout.width + switch_right_layout.width),
                                           md_bg_color=self.color_panel)
 
-            for i in (switch_name_layout, switch_type_layout, switch_header_layout):
-                switch_left_layout.add_widget(i)
-
-            for i in (switch_count_layout, switch_cost_layout, switch_version_layout):
-                switch_right_layout.add_widget(i)
+            # Сортировка лэйаутов
+            n = 0
+            for i in switch_layouts:
+                i.add_widget(switch_layouts[i][0])
+                i.add_widget(switch_layouts[i][1])
+                if len(switch_layouts[i]) >= 3:
+                    i.add_widget(switch_layouts[i][2])
+                if n < 3:
+                    switch_left_layout.add_widget(i)
+                else:
+                    switch_right_layout.add_widget(i)
+                n += 1
 
             switch_all_layout.add_widget(switch_left_layout)
             switch_all_layout.add_widget(switch_right_layout)
@@ -224,6 +230,7 @@ class Demo(MDApp):
         btn_wb = RFIB(icon='cart-arrow-down', text="Wildberries", on_release=self.wb_parse,
                       size_hint=(.2, .5), text_color='#8D297F', icon_color='#8D297F',
                       line_color=self.color_panel, font_size=14)
+
         # ______________________________Кнопки
         self.btn_doc_read = RFB(text="Считать", on_release=self.func_doc_read, size_hint=(0.5, None),
                                 text_color=self.color_acent_1, line_color=self.color_acent_2)
@@ -237,47 +244,68 @@ class Demo(MDApp):
             add_button_doc()
             add_button_shops()
 
+            # Лэйаут с кнопками-меню
             btn_select_layout = BoxLayout(orientation='horizontal', size_hint_y=None,
                                           height=self.btn_select_shop.height)
-            for i in (self.btn_select_shop, self.btn_input_doc_name):
-                btn_select_layout.add_widget(i)
-
+            # Лэйаут с кнопками-конвертации
             btn_read_layout = BoxLayout(orientation='horizontal', size_hint_y=None, height=self.btn_select_shop.height)
-            for i in (self.btn_doc_read, self.btn_doc_convert):
-                btn_read_layout.add_widget(i)
-
+            # Лэйаут с доп кнопками
             btn_edit_layout = BoxLayout(orientation='horizontal', size_hint_y=None, height=18)
-            for i in (BoxLayout(), btn_wb, btn_menu_item):
-                btn_edit_layout.add_widget(i)
-
+            # Лэйаут с кнопками
             btn_layout = BoxLayout(orientation='vertical', size_hint_x=None, width=350, padding=10, spacing=10,
                                    md_bg_color=self.color_panel)
-            for i in (btn_select_layout, btn_read_layout, btn_edit_layout, BoxLayout(), btn_launch_autoclick):
-                btn_layout.add_widget(i)
-
+            # Лэйаут - верхнее меню, с лэйаутами выше
             top_layout = BoxLayout(orientation='horizontal', padding=(0, 0, 0, 0,), size_hint_y=None, height='200dp',
                                    md_bg_color=self.color_background_top)
-            for i in (btn_layout, BoxLayout(), switched()):
-                top_layout.add_widget(i)
 
+            # Лэйаут под листающий список
             self.scroll_layout = BoxLayout(orientation='vertical', spacing=0, padding=(0, 10, 0, 0))
             self.scroll_layout.size_hint_y = None
             self.scroll_layout.bind(minimum_height=self.scroll_layout.setter('height'))
             scroll = ScrollView(do_scroll_x=False)
-            scroll.add_widget(self.scroll_layout)
 
+            # Главный лэйаут
             layout = BoxLayout(orientation='vertical', md_bg_color=self.color_list)
             top_layout_card = MDCard(orientation='horizontal', elevation=2, radius=[0, ], size_hint_y=None,
                                      height=top_layout.height, )
-            top_layout_card.add_widget(top_layout)
-            layout.add_widget(top_layout_card)
-            layout.add_widget(scroll)
+
+            # Структура лэйаутов
+            layout_dict = {top_layout_card:
+                               {top_layout:
+                                    {btn_layout:
+                                         {btn_select_layout: {self.btn_select_shop: {}, self.btn_input_doc_name: {}},
+                                          btn_read_layout: {self.btn_doc_read: {}, self.btn_doc_convert: {}},
+                                          btn_edit_layout: {BoxLayout(): {}, btn_wb: {}, btn_menu_item: {}},
+                                          BoxLayout(): {},
+                                          btn_launch_autoclick: {}
+                                          },
+                                     BoxLayout(): {},
+                                     switched(): {}
+                                     }},
+                           scroll: {self.scroll_layout: {}}}
+
+            # Процесс сортировки лэйаутов
+            for i in layout_dict:
+                if len(layout_dict[i]) > 0:
+                    for i2 in layout_dict[i]:
+                        if len(layout_dict[i][i2]) > 0:
+                            for i3 in layout_dict[i][i2]:
+                                if len(layout_dict[i][i2][i3]) > 0:
+                                    for i4 in layout_dict[i][i2][i3]:
+                                        if len(layout_dict[i][i2][i3][i4]) > 0:
+                                            for i5 in layout_dict[i][i2][i3][i4]:
+                                                i4.add_widget(i5)
+                                        i3.add_widget(i4)
+                                i2.add_widget(i3)
+                        i.add_widget(i2)
+                layout.add_widget(i)
+
             screen = Screen()
             screen.add_widget(layout)
             return screen
 
         self.items = copy(Database_functions.take_items())
-        if log: print('ДОКУМЕНТЫ: ' + str(onlyfiles))
+        if log: print('ДОКУМЕНТЫ: ' + str(self.onlyfiles))
         return sort_layouts()
 
     # Считать накладную
@@ -288,7 +316,6 @@ class Demo(MDApp):
         if self.btn_select_shop != 'Выбрать поставщика':
             if self.btn_select_shop.text == 'Чек':
                 if self.btn_input_doc_name.text.split('.')[1] in ('json'):
-                    print('ЫПРВЛОРПЫВЛОПРЫЛВП')
                     self.temp = doc(self.btn_select_shop.text, f"documents/{self.btn_input_doc_name.text}")
                     self.doc = self.temp['items']
 
@@ -403,7 +430,9 @@ class Demo(MDApp):
                 info = {'date': self.temp["date"], 'number': number}
             else:
                 info = None
-            asyncio.ensure_future(async_autoclick(self.end_docList, self.btn_select_shop, checkboxs, info, self.btn_input_doc_name.text.split('.')[1]))
+            asyncio.ensure_future(async_autoclick(self.end_docList, self.btn_select_shop, checkboxs, info,
+                                                  self.btn_input_doc_name.text.split('.')[1],
+                                                  self.checkbox_type.active))
             #Autoclick.start(self.end_docList, self.btn_select_shop, checkboxs, check_data=info)
         except Exception as e:
             self.scroll_layout.clear_widgets()
@@ -500,10 +529,15 @@ class Demo(MDApp):
     # Диалоговое окно - Сохранить на ентер
     def func_dialog_save_enter(self, window, key, i, r, x):
         logging.info('ИНТЕРФЕЙС: func_dialog_save_enter')
-        if self.enter_for_save:
-            if log: print('Сработала функция нажатия Enter')
-            if key == 13:
-                self.func_dialog_save(key)
+        print(self.dialog)
+        print(self.dialog_wb)
+        if self.dialog:
+            if self.enter_for_save:
+                if log: print('Сработала функция нажатия Enter')
+                if key == 13:
+                    self.func_dialog_save(key)
+        if self.dialog_wb:
+            self.wb_save(self, key)
 
     # Диалоговое окно - Кнопка-название товара
     def func_dialog_select(self, obj):
@@ -521,8 +555,9 @@ class Demo(MDApp):
     # Диалоговое окно - Кнопка-название товара (Активация через ентер)
     def func_dialog_enter(self, instance):
         logging.info('ИНТЕРФЕЙС: func_dialog_enter')
-        obj = self.menu_select_item
-        self.func_dialog_select(obj=obj)
+        if self.dialog:
+            obj = self.menu_select_item
+            self.func_dialog_select(obj=obj)
 
     # Загрузка, поиск и отображение товаров в выпадающем списке
     def func_dialog_load(self,instance, item=None):
@@ -649,6 +684,19 @@ class Demo(MDApp):
                                     text_color_focus=self.color_acent_1, line_color_focus=self.color_acent_2,
                                     hint_text_color_focus=self.color_acent_2)
 
+            self.token = MDTextField(text=base_get()[0] if base_get() is not None else '',
+                                     hint_text="Токен",
+                                     helper_text_mode="on_focus", helper_text="Просто вставь сюда токен",
+                                     size_hint_x=None, width=240,
+                                     halign='left',
+                                     on_text_validate=self.func_dialog_enter, text_color_focus=self.color_acent_1,
+                                     line_color_focus=self.color_acent_2, hint_text_color_focus=self.color_acent_2)
+
+            self.token_btn = RFIB(icon='key', text="Авторизоваться",
+                                  on_release=lambda x: self.wb_replace_widget(new_widget=self.token),
+                                  size_hint_y=None, height='160dp', text_color='#8D297F', icon_color='#8D297F',
+                                  line_color=self.color_acent_2, font_size=18)
+
             self.get_item = RFB(text="Получить чеки",
                                 on_release=self.wb_get,
                                 halign="right",
@@ -659,18 +707,6 @@ class Demo(MDApp):
                             halign="left",
                             text_color=self.color_acent_1, line_color=self.color_acent_2)
 
-            self.token = MDTextField(text=base_get()[0] if base_get() is not None else '',
-                                     hint_text="Токен",
-                                     helper_text="Просто вставь сюда токен",
-                                     helper_text_mode="on_focus",
-                                     size_hint_x=None, width=240,
-                                     halign='left',
-                                     on_text_validate=self.func_dialog_enter, text_color_focus=self.color_acent_1,
-                                     line_color_focus=self.color_acent_2, hint_text_color_focus=self.color_acent_2)
-            self.token_btn = RFIB(icon='key', text="Авторизоваться",
-                                  on_release=lambda x: self.wb_replace_widget(new_widget=self.token),
-                                  size_hint=(.2, .5), text_color='#8D297F', icon_color='#8D297F',
-                                  line_color=self.color_panel, font_size=18)
             self.verify = MDLabel(halign="center", size_hint_x=None,
                                   theme_text_color='Custom', text_color=self.color_acent_1)
             # Наполнение верхнего меню
@@ -684,6 +720,7 @@ class Demo(MDApp):
             date_text = date_text[2] + '.' + date_text[1] + '.' + date_text[0] if base_get() is not None else ''
             self.date.text = date_text
             self.token.bind(focus=self.wb_on_focus)
+            self.date.bind(focus=self.wb_on_focus2)
 
             if WB_Pars.auth(self.token.text).ok:
                 self.token_btn.text = 'Подключено!'
@@ -692,7 +729,7 @@ class Demo(MDApp):
 
             # Верхнее меню - Лэйауты
             self.layout_top_wb = MDBoxLayout(orientation='vertical')
-            for i in (self.token_btn, self.date, self.verify, self.save):
+            for i in (self.token_btn, self.date, self.save):
                 self.layout_top_wb.add_widget(i)
             self.layout_top_wb.size_hint_y = None
             self.layout_top_wb.bind(minimum_height=self.layout_top_wb.setter('height'))
@@ -718,7 +755,6 @@ class Demo(MDApp):
             self.layout_middle = ScrollView(size_hint=(1, 1), pos_hint={'center_x': .5, 'center_y': .5},
                                             do_scroll_x=False)
             self.layout_menu.add_widget(self.layout_middle)
-            self.wb_replace_widget(self.token_btn)
             return self.layout_menu
 
         self.dialog_wb = MDDialog(title='Чеки WildBerries', type="custom", content_cls=sort_(),
@@ -727,17 +763,27 @@ class Demo(MDApp):
 
     def wb_on_focus(self, value, instance):
         logging.info('ИНТЕРФЕЙС: wb_on_focus')
-        if not value:  # Если фокус потерян
+        print('Значение вали')
+        print(value.hint_text)
+        print(instance)
+        if not self.token.focus:  # Если фокус потерян
             self.wb_replace_widget(new_widget=self.token_btn)
+
+    def wb_on_focus2(self, value, instance):
+        pass
 
     def wb_replace_widget(self, new_widget):
         logging.info('ИНТЕРФЕЙС: wb_replace_widget')
-        self.token.focus = True
+        if new_widget.text not in ('Авторизоваться!', 'Подключено!'):
+            if self.token.focus == False:
+                self.token.focus = True
+        else:
+            if self.token.focus == True:
+                self.token.focus = False
+
         self.layout_top_wb.clear_widgets()
-        self.layout_top_wb.add_widget(new_widget)
-        self.layout_top_wb.add_widget(self.date)
-        self.layout_top_wb.add_widget(self.verify)
-        self.layout_top_wb.add_widget(self.save)
+        for i in (new_widget, self.date, self.save):
+            self.layout_top_wb.add_widget(i)
 
     def wb_save(self, instance):
         logging.info('ИНТЕРФЕЙС: wb_save')
@@ -769,6 +815,7 @@ class Demo(MDApp):
                 self.verify.text = 'Не найдены точки!'
         else:
             self.verify.text = 'Длинна даты не правильная!'
+        self.wb_replace_widget(new_widget=self.token_btn)
 
     def wb_get(self, instance):
         logging.info('ИНТЕРФЕЙС: wb_get')
@@ -783,12 +830,7 @@ class Demo(MDApp):
                 ind_check = 0
                 index_check_WB = 0
                 remove_mass = []
-                for i in onlyfiles:  # Поиск уже добавленых чеков
-                    if i.find('WB') != -1:
-                        remove_mass.append(i)
-                    index_check_WB += 1
-                for i in remove_mass:  # Удаление добавленых чеков
-                    onlyfiles.remove(i)
+                self.teafiles = []  # Удаление добавленых чеков
                 for check in checks:  # Создание чеков
                     line = MDBoxLayout(md_bg_color=self.color_background_start, size_hint_y=None, height=30)
                     layout_receipt = MDBoxLayout(orientation='vertical', md_bg_color=self.color_list)
@@ -842,7 +884,7 @@ class Demo(MDApp):
                          'check': check['number'].strip('                        '),
                          'items': [{'id': 0, 'name': 'Чай пакетированный', 'cost': all_price,
                                     'count': all_count, 'sum': all_price, 'type': 'шт'}]})
-                    onlyfiles.append(f'{ind_check}.WB')
+                    self.teafiles.append(f'{ind_check}.WB')
 
                     # Нормализация размеров лайаутов
                     layout_receipt.size_hint_y = None

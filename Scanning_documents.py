@@ -4,7 +4,10 @@ import logging
 
 log = True
 
+
 def hat(worksheet, i):
+    logging.info('СКАН: hat')
+    if log: print('\033[43m')
     i2 = 0
     find1 = False
     find2 = False
@@ -29,31 +32,46 @@ def hat(worksheet, i):
         return (number, date)
     else:
         return False
+    if log: print('Работа с заголовком завершена')
+    if log: print('\033[0m')
 
 
 def fix(item, worksheet, i, ii, index, shop):
     logging.info('СКАН: fix')
+    if log: print('\033[41m')
     if item['count'].find(' ') != -1:
         item['count'] = ','.join(item['count'].split(' '))
 
     x = 0
     item['type'] = re.sub('[^а-яА-Я]', '', item['type'])
+    item['count'] = re.sub('[^0-9.,]', '', item['count'])
+    item['cost'] = re.sub('[^0-9.,]', '', item['cost'])
+    print('ПРОВЕРКА НАЗВАЗ')
+    print(item['type'])
+    print(item['count'])
+    print(item['cost'])
     while True:
-        if item['count'].find(',') != -1 or item['count'].find('.'):
+        if item['count'].find(',') != -1 or item['count'].find('.') != -1:
             try:
-                l = len(item['count'].split(',')[1])
+                l = len(re.sub('[^0-9.,]', '', str(item['count'].split(',')[1])))
             except:
                 try:
-                    l = len(item['count'].split('.')[1])
+                    l = len(re.sub('[^0-9.,]', '', str(item['count'].split('.')[1])))
                 except:
                     l = 0
             if l == 3:
                 s = str(worksheet.cell_value(i, index[1] + ii + (1 if x == 0 else 2)))
                 if s.find(',') != -1 or s.find('.') != -1:
+                    print('Проверка L2')
+                    temp_count1 = str(worksheet.cell_value(i, index[1] + ii + (1 if x == 0 else 2 if x == 1 else 3)))
+                    try:
+                        print(temp_count1.split(',')[1])
+                    except:
+                        print(temp_count1.split('.')[1])
                     try:
                         l2 = len(
-                            str(worksheet.cell_value(i, index[1] + ii + (1 if x == 0 else 2 if x == 1 else 3))).split(
-                                ',')[1])
+                            re.sub('[^0-9.,]', '', str(worksheet.cell_value(i, index[1] + ii + (1 if x == 0 else 2 if x == 1 else 3))).split(
+                                ',')[1]))
                     except:
                         l2 = len(str(worksheet.cell_value(i, index[1] + ii + (
                             1 if x == 0 else 2 if x == 1 else 3))).split('.')[1])
@@ -62,8 +80,11 @@ def fix(item, worksheet, i, ii, index, shop):
                         break
                     else:
                         if log: print('1 ИСПРАВЛЕНО КОЛИЧЕСТВО!')
+                        if log: print('COUNT до: ' + str(item['count']))
                         item['count'] = str(worksheet.cell_value(i, index[1] + ii + (
                             1 if x == 0 else 2 if x == 1 else 3)))
+                        item['count'] = re.sub('[^0-9.,]', '', item['count'])
+                        if log: print('COUNT после: ' + str(item['count']))
                         if item['count'].find(' ') != -1:
                             item['count'] = ','.join(item['count'].split(' '))
                         if x == 2: break
@@ -73,20 +94,29 @@ def fix(item, worksheet, i, ii, index, shop):
                     break
             else:
                 if log: print('2 ИСПРАВЛЕНО КОЛИЧЕСТВО!')
-                if log: print('COUNT: ' + str(item['count']))
+                if log: print('COUNT до: ' + str(item['count']))
                 new_id = index[1] + ii + (1 if x == 0 else 2)
                 if log: print('new_id: ' + str(new_id))
                 item['count'] = str(worksheet.cell_value(i, new_id))
-                if log: print('COUNT: ' + str(item['count']))
+                item['count'] = re.sub('[^0-9.,]', '', item['count'])
+                if log: print('COUNT после: ' + str(item['count']))
                 if item['count'].find(' ') != -1:
                     item['count'] = ','.join(item['count'].split(' '))
                 if x == 2: break
                 x = 1 if x == 0 else 2
         else:
             if log: print('3 ИСПРАВЛЕНО КОЛИЧЕСТВО!')
-            if log: print('COUNT: ' + str(item['count']))
-            item['count'] = str(worksheet.cell_value(i, index[1] + ii + (1 if x == 0 else 2)))
-            if log: print('COUNT: ' + str(item['count']))
+            if log: print('COUNT до: ' + str(item['count']))
+            if shop != 'Хозы':
+                item['count'] = str(worksheet.cell_value(i, index[1] + ii + (1 if x == 0 else 2)))
+                item['count'] = re.sub('[^0-9]', '', item['count'])
+            else:
+                try:
+                    int(item['count'])
+                    break
+                except:
+                    pass
+            if log: print('COUNT: после ' + str(item['count']))
             if item['count'].find(' ') != -1:
                 item['count'] = ','.join(item['count'].split(' '))
             if x == 2: break
@@ -97,10 +127,15 @@ def fix(item, worksheet, i, ii, index, shop):
 
     if log: print('COST: ' + str(item['cost']))
 
+
     if item['cost'].find(' ') != -1:
         item['cost'] = '.'.join(item['cost'].split(' '))
     if item['cost'].find(',') != -1:
         item['cost'] = '.'.join(item['cost'].split(','))
+    if len(item['cost'].split('.')) > 2:
+        temp = item['cost'].split('.')
+        temp2 = str(temp[0]) + '' +str(temp[1]) + '.' + str(temp[2])
+        item['cost'] = temp2
 
     if log: print('COST2: ' + str(item['cost']))
 
@@ -176,11 +211,14 @@ def fix(item, worksheet, i, ii, index, shop):
         item['name'] = str(worksheet.cell_value(i, index[0] + ii - 1))
         if len(item['name']) < 4:
             item['name'] = str(worksheet.cell_value(i, index[0] + ii - 2))
+    if log: print('Фикс завершен')
+    if log: print('\033[0m')
     return item
 
 
 def check_(doc_): # Сканер json чека
     logging.info('СКАН: check')
+    if log: print('\033[43m')
     check = None
     with open(doc_, 'r', encoding='utf-8') as json_file:
         if doc_.split('.')[1] == 'json':
@@ -209,10 +247,13 @@ def check_(doc_): # Сканер json чека
             return check
         else:
             return False
+    if log: print('Сканирование чека завершено')
+    if log: print('\033[0m')
 
 
 def doc(shop, doc_):
     logging.info('СКАН: doc')
+    if log: print('\033[46m')
     import xlrd
     items = []
     # Open the Workbook
@@ -252,6 +293,7 @@ def doc(shop, doc_):
                 header_find = True
                 type_find = True
                 for i in range(0, 40):
+                    if log: print('Цикл сканирования')
                     if header_find and type_find:
                         header = hat(worksheet, i)
                         if header != False:
@@ -260,7 +302,7 @@ def doc(shop, doc_):
                     item['id'] = id
                     try:
                         ii = 0
-                        while ii < 4:
+                        while ii < 6:
                             temp_Type = re.sub('[^а-яА-Я]', '', str(worksheet.cell_value(i, index[2] + ii)).lower())
                             if str(temp_Type).lower() in types:
                                 break
@@ -268,21 +310,20 @@ def doc(shop, doc_):
                                 ii += 1
 
                         temp_Name = str(worksheet.cell_value(i, index[0] + ii))
-                        print(temp_Name)
-                        print(index[0] + ii)
-                        print(ii)
                         if len(temp_Name) < 4:
-                            print(temp_Name)
                             temp_Name = str(worksheet.cell_value(i, index[0] + ii - 1))
                             if len(temp_Name) < 4:
-                                print(temp_Name)
                                 temp_Name = str(worksheet.cell_value(i, index[0] + ii - 2))
 
                         if log: print('\n\nКоррекция сдвига на: ' + str(ii))
                         if log: print('Тип упаковки: ' + str(worksheet.cell_value(i, index[2] + ii)).lower())
                         if log: print('Наименование: ' + str(worksheet.cell_value(i, index[0] + ii)))
 
+                        temp_Type = re.sub('[^а-яА-Я]', '', temp_Type)
+                        print('tempType:')
+                        print(temp_Type)
                         if len(temp_Name) > 2 and temp_Type in types:
+                            if log: print('Имя больше 2-х и тип есть в types')
                             type_find = False
                             id += 1
                             item['name'] = str(worksheet.cell_value(i, index[0] + ii))
@@ -303,8 +344,8 @@ def doc(shop, doc_):
                         if log: print('ОШИБКА: ' + str(e))
                         if log: print('ID: ' + str(i))
                 if log: print('Результат сканирования:')
-                if log: print(items)
-                if log: print(header)
+                if log: print('items: ' + str(items))
+                if log: print('header: ' + str(header))
                 if header != False and len(header) >= 2:
                     check = {'date': str(header[1]), 'check': str(header[0]), 'items': items}
                 else:
@@ -318,3 +359,5 @@ def doc(shop, doc_):
         else:
             if log: print('Формат файла не поддерживается!')
             return False
+    if log: print('Сканирование документа завершено')
+    if log: print('\033[0m')

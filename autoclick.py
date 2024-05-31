@@ -7,17 +7,13 @@ import Database_connections as dc
 log = True
 def paste(text):
     pyperclip.copy(text)
-    pyautogui.keyDown('ctrl')
-    pyautogui.press('v')
-    pyautogui.keyUp('ctrl')
+    pyautogui.hotkey('ctrl', 'v')
 
 
 def keyboard():  # Проверка расскладки и изменение на английскую!
     logging.info('АВТОКЛИКЕР: keyboard\033[0m')
-    pyautogui.keyDown('ctrl')
-    pyautogui.press('a')
-    pyautogui.press('c')
-    pyautogui.keyUp('ctrl')
+    pyautogui.hotkey('ctrl', 'a')
+    pyautogui.hotkey('ctrl', 'c')
     key = pyperclip.paste()
     if log: print(key)
     if key.find(',') != -1 and len(key) < 8:
@@ -97,8 +93,31 @@ def header(shop, check_data):
         time.sleep(0.5)
 
 
-def start(items, shop, checkboxs, format, check_data=None):
+def type_input(shop, name):
+    time.sleep(1)
+    pyautogui.press('left')
+    if shop.text in ('Метро', 'Чек'):
+        tc = name.split(' ')[0]
+        print('tc = ' + str(tc))
+        if tc.lower() in ('1кг', "1л", "1000г", '1'):
+            pyautogui.press('right')
+        else:
+            pyautogui.press('1')
+            pyautogui.press('right', presses=3)
+            pyautogui.press(tc[0])
+            pyautogui.press('0')
+            pyautogui.press('0')
+            pyautogui.hotkey('ctrl', 'a')
+            pyautogui.hotkey('ctrl', 'c')
+            key = pyperclip.paste()
+            if key == '0,000':
+                pass
+            else:
+                pyautogui.press('enter')
+
+def start(items, shop, checkboxs, format, type, check_data=None):
     logging.info('АВТОКЛИКЕР: start\033[0m')
+    if log: print('\033[46m')
     if log: print('Автокликер запущен!')
     dc.update_item('АВТОКЛИКЕР', '1')
     time.sleep(5)
@@ -171,7 +190,14 @@ def start(items, shop, checkboxs, format, check_data=None):
                                         else:
                                             if log: print('Курсор на количестве, нажимается влево, для изменения на шт.')
                                             pyautogui.press('left')
-                                        pyautogui.press('1')
+                                        if i['original'].split(' ')[0].lower() in ('1кг', "1л", "1000г", '1'):
+                                            pyautogui.press('right')
+                                        else:
+                                            print('Объём тары:')
+                                            print(i['original'].split(' ')[0].lower())
+                                            pyautogui.press('1')
+                                        if type:
+                                            type_input(shop, i['original'])
                                         paste('0')
                                         if keyboard():
                                             if log: print('Курсор не на количестве, нажимается ентер.')
@@ -206,4 +232,5 @@ def start(items, shop, checkboxs, format, check_data=None):
                             pyautogui.press('down')
                             time.sleep(1)
     if log: print('Автокликер закончил свою работу!')
+    if log: print('\033[0m')
     dc.update_item('АВТОКЛИКЕР', '0')
