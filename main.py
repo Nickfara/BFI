@@ -22,6 +22,7 @@ import Wildberries_parser as WB_Pars
 import autoclick
 
 
+items_warning = []
 log = True
 dc.update_item('АВТОКЛИКЕР', '0')
 
@@ -35,12 +36,17 @@ async def async_autoclick(a, b, c, d, e, f):
         executor = ThreadPoolExecutor()
 
         def start_clicker():
-            autoclick.start(a, b, c, e, f, check_data=d)
+            result = autoclick.start(a, b, c, e, f, check_data=d)
+            items_warning.append(result) # Запуск автокликера и добавление предупреждений если есть
+            BotiIko.check_warnings()
 
         await loop.run_in_executor(executor, start_clicker)
+
     else:
         print('Остановка автокликера!')
         dc.update_item('АВТОКЛИКЕР', '0')
+
+
 
 def base_get():
     logging.info('ИНТЕРФЕЙС: base_get')
@@ -62,7 +68,7 @@ def base_push(string):
         f.close()
 
 
-class Demo(MDApp):
+class BotiIko(MDApp):
     def __init__(self):  # Переменные класса
         super().__init__()
         # Оформление
@@ -94,6 +100,19 @@ class Demo(MDApp):
         self.shops = sorted(self.shops)  # Сортировка
         self.dialog_wb = None
 
+    def check_warnings(self):
+        def check2():
+            if len(items_warning) > 0:
+                print(items_warning[0])
+                if len(items_warning[0]) > 0:
+                    text = 'Цена у товаров с id ниже отличается более чем в 1.7 раз:'
+                    for i in items_warning[0]:
+                        print('ПОП2')
+                        text += f'\n{i}'
+                    text_ = MDLabel(text=text)
+                    self.scroll_layout.clear_widgets()
+                    self.scroll_layout.add_widget(text_)
+                    print('ПОПОПОПОПО')
     def scan_file(self):
         logging.info('ИНТЕРФЕЙС: scan_file')
         self.onlyfiles = [f for f in listdir('documents') if isfile(join('documents', f))]
@@ -147,32 +166,29 @@ class Demo(MDApp):
             # ______________________________Переключатели
             self.switch_name = MDSwitch(width='64', track_color_active=self.color_acent_2,
                                         thumb_color_inactive=self.color_acent_2,
-                                        thumb_color_active=self.color_background_start)
+                                        thumb_color_active=self.color_background_start) # Переключатель наименования
             self.switch_name.active = True
             self.switch_header = MDSwitch(width='64', track_color_active=self.color_acent_2,
                                           thumb_color_inactive=self.color_acent_2,
                                           thumb_color_active=self.color_background_start, pos=(.8, .5))
-            self.checkbox_header = MDCheckbox(size_hint=(None, None), size=(24, 24))
+            self.checkbox_header = MDCheckbox(size_hint=(None, None), size=(24, 24)) # Переключатель шапки
             self.checkbox_header.pos_hint = {'x': .5, 'y': 0.3}
             self.switch_header.active = True
             self.switch_type = MDSwitch(size_hint=(None, None), width='10dp', track_color_active=self.color_acent_2,
                                         thumb_color_inactive=self.color_acent_2,
-                                        thumb_color_active=self.color_background_start)
+                                        thumb_color_active=self.color_background_start) # Переключатель типа
             self.switch_type.active = True
-            self.checkbox_type = MDCheckbox(size_hint=(None, None), size=(24, 24))
+            self.checkbox_type = MDCheckbox(size_hint=(None, None), size=(24, 24)) # Чекбокс детального ввода типа
             self.checkbox_type.pos_hint = {'x': .5, 'y': 0.3}
 
             self.switch_count = MDSwitch(size_hint=(None, None), width='10dp', track_color_active=self.color_acent_2,
                                          thumb_color_inactive=self.color_acent_2,
-                                         thumb_color_active=self.color_background_start)
+                                         thumb_color_active=self.color_background_start) # Переключатель количества
             self.switch_cost = MDSwitch(size_hint=(None, None), width='10dp', track_color_active=self.color_acent_2,
                                         thumb_color_inactive=self.color_acent_2,
-                                        thumb_color_active=self.color_background_start)
-            self.switch_version = MDSwitch(active=False, size_hint=(None, None), width='10dp',
-                                           track_color_active=self.color_background_start,
-                                           track_color_inactive=self.color_background_start,
-                                           thumb_color_inactive=self.color_list, thumb_color_active=self.color_list)
-            self.switch_version.bind(active=self.func_switch_version)
+                                        thumb_color_active=self.color_background_start) # Переключатель цены
+            self.switch_version = RFB(text='Режим', size_hint=(None, None), width='10dp', icon='plus',
+                                       text_color=self.color_acent_1, line_color=self.color_acent_2, on_release=self.func_switch_version) # Переключатель режимов
             # _________________________Текст_Переключателей
             switch_header_text = MDLabel(text='Шапка:', valign="center", halign="right", theme_text_color='Custom',
                                          text_color=self.color_acent_1)
@@ -439,6 +455,7 @@ class Demo(MDApp):
             if log: print(e)
             self.scroll_layout.add_widget(MDLabel(text=str(e)))
 
+
     # Диалоговое окно - Открытие
     def func_dialog_open(self, obj):
         logging.info('ИНТЕРФЕЙС: func_dialog_open')
@@ -454,7 +471,7 @@ class Demo(MDApp):
             'center_x': 0.5, 'center_y': 0.6}, text_color=self.color_acent_1, line_color=self.color_acent_2,
                              on_release=self.func_clear_item)
         name = self.name_['name'] if type(self.name_) == dict else 'none'
-        text = f"Товар с наименованием: '{name}', не найден, выберите его из списка ниже! "
+        text = f"'{name}' - наименование не найдено, выберите товар из списка ниже, что бы связать их! "
         if type(obj) is not int:
             if obj.text == 'Редактировать товар':
                 text = 'Выберите товар из списка, для редактирования!'
@@ -537,7 +554,7 @@ class Demo(MDApp):
                 if key == 13:
                     self.func_dialog_save(key)
         if self.dialog_wb:
-            self.wb_save(self, key)
+            self.wb_save(self)
 
     # Диалоговое окно - Кнопка-название товара
     def func_dialog_select(self, obj):
@@ -664,13 +681,21 @@ class Demo(MDApp):
         pass
 
     # Переключатель режима автокликера
-    def func_switch_version(self, instance, pos):
+    def func_switch_version(self, instance):
         logging.info('ИНТЕРФЕЙС: func_switch_version')
-        self.switch_name.active = (False if pos else True)
-        self.switch_header.active = False
-        self.switch_type.active = (False if pos else True)
-        self.switch_count.active = (True if pos else False)
-        self.switch_cost.active = (True if pos else False)
+        if ((self.switch_name.active and self.switch_type.active and self.switch_count.active == False and self.switch_cost.active == False) or
+                (self.switch_count.active and self.switch_cost.active and self.switch_name.active == False and self.switch_type.active == False)):
+            self.switch_name.active = (False if self.switch_name.active else True)
+            self.switch_header.active = False
+            self.switch_type.active = (False if self.switch_type.active else True)
+            self.switch_count.active = (False if self.switch_count.active else True)
+            self.switch_cost.active = (False if self.switch_cost.active else True)
+        else:
+            self.switch_name.active = True
+            self.switch_header.active = True
+            self.switch_type.active = True
+            self.switch_count.active = False
+            self.switch_cost.active = False
 
     # Запуск парсера чеков Wildberries
     def wb_parse(self, instance):
@@ -917,7 +942,7 @@ def run_async():
     asyncio.set_event_loop(loop)
 
     # Запускаем цикл событий Kivy
-    async_run = asyncio.ensure_future(asyncio.gather(Demo().async_run(async_lib='asyncio')))
+    async_run = asyncio.ensure_future(asyncio.gather(BotiIko().async_run(async_lib='asyncio')))
     # Планируем остановку цикла, когда Kivy App закроется
     async_run.add_done_callback(lambda *args: loop.stop())
 

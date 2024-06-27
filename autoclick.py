@@ -4,22 +4,32 @@ import pyperclip
 import os
 import logging
 import Database_connections as dc
+import re
+
+
 log = True
+check_text = 'Пика узелок'
+
 def paste(text):
     pyperclip.copy(text)
-    pyautogui.hotkey('ctrl', 'v')
+    if type(str(text)) in (str, int, float):
+        text = re.sub('[^а-яА-Я0-9.,]', '', str(text))
+        if len(str(text)) > 0:
+            pyautogui.hotkey('ctrl', 'v')
 
 
-def keyboard():  # Проверка расскладки и изменение на английскую!
+def keyboard():  # Проверка
     logging.info('АВТОКЛИКЕР: keyboard\033[0m')
     pyautogui.hotkey('ctrl', 'a')
     pyautogui.hotkey('ctrl', 'c')
     key = pyperclip.paste()
-    if log: print(key)
+    if log: print('Key=', str(key))
     if key.find(',') != -1 and len(key) < 8:
         x = False
+    elif key == check_text:
+        x = check_text
     else:
-        x = True
+        x = key
     os.system('echo ' + 'текст'.strip() + '| clip')
     return x
 
@@ -34,18 +44,45 @@ def header(shop, check_data):
              'Метро': '61 /030', 'Матушка': 'MKER-', 'Хозы': '',
              'Юнит': '', 'Выпечка': '', 'Айсберри': '',
              'Десан': '', 'Виста': 'USKA-00', 'Кофе': '', 'Арома': ''}
-    paste(shops[shop.text])
-    time.sleep(0.5)
-    pyautogui.press('enter')
+    repeater = True
+    while repeater:
+        paste(shops[shop.text])
+        time.sleep(1)
+        pyautogui.press('enter')
+        if keyboard() in ('Рынок/Магазин', 'ИП Петухов В.В.', 'ООО "МЕТРО КЭШ ЭНД КЕРРИ"', 'ООО ТД "Матушка"',
+                          'ИП Касумов М.А.','ООО "Юнит"', 'ИП Насретдинов Д.Н.', 'ООО ТД "Айсберри"','ООО "ДЕСАН"',
+                          'ООО "ВИСТ"', 'ООО "СТС"', 'ИП Щербакова И. В.'):
+            repeater = False
+
+    repeater = True
+    while repeater and dc.get_item('АВТОКЛИКЕР')['names'] == '1':
+        result = keyboard()
+        if '.' in str(result):
+            repeater = False
+        else:
+            if result in ('Основной склад', 'Склад Бар', 'Склад Кухня'):
+                pyautogui.hotkey('shift', 'tab')
+            elif result in ('Рынок/Магазин', 'ИП Петухов В.В.', 'ООО "МЕТРО КЭШ ЭНД КЕРРИ"', 'ООО ТД "Матушка"',
+                          'ИП Касумов М.А.','ООО "Юнит"', 'ИП Насретдинов Д.Н.', 'ООО ТД "Айсберри"','ООО "ДЕСАН"',
+                          'ООО "ВИСТ"', 'ООО "СТС"', 'ИП Щербакова И. В.'):
+                pyautogui.press('tab')
+            else:
+                for i in range(1,13):
+                    pyautogui.hotkey('shift', 'tab')
+                pyautogui.press('tab', presses=4)
+
+    pyautogui.press('left')
     time.sleep(1.5)
     if check_data != None:
-        pyautogui.press('tab')
         time.sleep(0.5)
         if shop.text == 'Чек':
             check_data['date'] = check_data['date'].split('T')[0].split('-')
         else:
             check_data['date'] = check_data['date'].split('.')
-            check_data['date'] = (check_data['date'][2], check_data['date'][1], check_data['date'][0])
+            if len(check_data['date']) > 2:
+                check_data['date'] = (check_data['date'][2], check_data['date'][1], check_data['date'][0])
+            else:
+                check_data['date'] = ('01', '01', '2024')
         paste(check_data['date'][2])
         time.sleep(5)
         paste(check_data['date'][1])
@@ -54,15 +91,25 @@ def header(shop, check_data):
         pyautogui.press('tab', presses=2)
     else:
         pyautogui.press('tab', presses=3)
-    time.sleep(0.5)
-    if shop.text in ('Виста', 'Кофе', 'Айсберри'):
-        paste('Склад Бар')
-    elif shop.text in ('ДЕСАН', 'Хозы'):
-        paste('Основной склад')
-    else:
-        paste('Склад Кухня')
 
     time.sleep(0.5)
+
+    repeater = True
+    while repeater and dc.get_item('АВТОКЛИКЕР')['names'] == '1':
+        if shop.text in ('Виста', 'Кофе', 'Айсберри'):
+            paste('Склад Бар')
+        elif shop.text in ('ДЕСАН', 'Хозы'):
+            paste('Основной склад')
+        else:
+            paste('Склад Кухня')
+
+        time.sleep(0.5)
+        result = keyboard()
+        if result in ('Основной склад', 'Склад Бар', 'Склад Кухня'):
+            repeater = False
+        else:
+            pyautogui.press('tab')
+
     pyautogui.press('enter')
     time.sleep(1)
     pyautogui.press('tab', presses=3)
@@ -95,7 +142,6 @@ def header(shop, check_data):
 
 def type_input(shop, name):
     time.sleep(1)
-    pyautogui.press('left')
     if shop.text in ('Метро', 'Чек'):
         tc = name.split(' ')[0]
         print('tc = ' + str(tc))
@@ -115,12 +161,17 @@ def type_input(shop, name):
             else:
                 pyautogui.press('enter')
 
+
+
 def start(items, shop, checkboxs, format, type, check_data=None):
     logging.info('АВТОКЛИКЕР: start\033[0m')
     if log: print('\033[46m')
     if log: print('Автокликер запущен!')
     dc.update_item('АВТОКЛИКЕР', '1')
     time.sleep(5)
+    item_n = 1
+    item_warning = []
+
     if shop.text in ['Виста', 'Кофе', 'Айсберри']:
         if log: print('Заводится накладная c 1 товаром')
         header(shop, check_data)
@@ -148,7 +199,20 @@ def start(items, shop, checkboxs, format, type, check_data=None):
                         if log: print('ПРОВЕРКА ЧЕКБОКСОВ')
                         if log: print(checkboxs)
                         if checkboxs['name'] or checkboxs['type']:
+                            repeater = True
+                            while repeater and dc.get_item('АВТОКЛИКЕР')['names'] == '1':
+                                print('Проводится поверка на позицию в названии')
+                                paste(check_text)
+                                pyautogui.press('enter')
+                                result = keyboard()
+                                pyautogui.press('tab', presses=3)
+                                pyautogui.press('left', presses=8)
+                                pyautogui.press('right', presses=1)
+                                if result == check_text:
+                                    repeater = False
+                            time.sleep(0.5)
                             if checkboxs['name']:
+                                print('Заводится название: ' + str(i['name']))
                                 paste(i['name'])
                             pyautogui.press('enter')
                             if keyboard():
@@ -158,7 +222,7 @@ def start(items, shop, checkboxs, format, type, check_data=None):
                                 pyautogui.press('right')
 
                             if checkboxs['type']:
-                                if log: print('ТИП РАБОТАЕТ')
+                                if log: print('Заводится ТИП: ' + str(i['type']))
                                 if i['type'].lower() in ("шт", 'уп', 'рул', 'упак', 'мст'):
                                     if shop.text == 'Чек':
                                         count_check = True
@@ -167,65 +231,75 @@ def start(items, shop, checkboxs, format, type, check_data=None):
                                         if float_ > 0.0:
                                             count_check = False
                                         if count_check:
-                                            paste('0')
-                                            if keyboard():
-                                                pass
-                                            else:
-                                                if log: print('Нажимается влево так как курсор на цифре')
-                                                pyautogui.press('left')
+                                            pyautogui.press('tab')
+                                            pyautogui.press('left', presses=6)
+                                            pyautogui.press('right', presses=2)
                                             pyautogui.press('1')
-                                            paste('0')
-                                            if keyboard():
-                                                if log: print('Курсор не на количестве, нажимается ентер.')
-                                                pyautogui.press('enter')
-                                            paste('0')
-                                            if keyboard():
-                                                if log: print('Курсор не на количестве, нажимается вправо.')
-                                                pyautogui.press('right')
                                     else:
-                                        if log: print('У товара указано штука, начало изменения позиции.')
-                                        paste('0')
-                                        if keyboard():
-                                            pass
-                                        else:
-                                            if log: print('Курсор на количестве, нажимается влево, для изменения на шт.')
-                                            pyautogui.press('left')
+                                        pyautogui.press('tab')
+                                        pyautogui.press('left', presses=6)
+                                        pyautogui.press('right', presses=2)
+
                                         if i['original'].split(' ')[0].lower() in ('1кг', "1л", "1000г", '1'):
                                             pyautogui.press('right')
                                         else:
                                             print('Объём тары:')
                                             print(i['original'].split(' ')[0].lower())
                                             pyautogui.press('1')
+
                                         if type:
                                             type_input(shop, i['original'])
-                                        paste('0')
-                                        if keyboard():
-                                            if log: print('Курсор не на количестве, нажимается ентер.')
-                                            pyautogui.press('enter')
-                                        paste('0')
-                                        if keyboard():
-                                            if log: print('Курсор не на количестве, нажимается вправо.')
-                                            pyautogui.press('right')
+
                             if log: print('ТИП ДОРАБОТАЛ')
                         if checkboxs['count'] or checkboxs['cost']:
+                            repeater = True
+                            while repeater and dc.get_item('АВТОКЛИКЕР')['names'] == '1':
+                                print('Проводится проверка на позицию в количестве')
+                                pyautogui.press('0')
+                                result = keyboard()
+
+                                pyautogui.press('tab', presses=3)
+                                pyautogui.press('left', presses=8)
+                                pyautogui.press('right', presses=3)
+                                print(result)
+
+                                if result == False:
+                                    repeater = False
+
                             if checkboxs['count']:
-                                paste('0')
+                                print('Заводится количество: ' + str(i['count']))
+                                pyautogui.press('0')
                                 paste(i['count'])
+
                             pyautogui.press('enter')
+
                             if shop.text in ['Айсбери', 'Десан']: # Если одна из этих накладных, то заводися сумма - шаги вправо
                                 pyautogui.press('right', presses=4)
+
                             if checkboxs['cost']:
+                                print('Заводится цена: ' + str(i['cost']))
+                                pyautogui.hotkey('ctrl', 'a')
+                                pyautogui.hotkey('ctrl', 'c')
+                                key = pyperclip.paste()
+
+                                check_sum = float(i['cost'])/float('.'.join(key.split(',')))
+                                if check_sum > 1.7:
+                                    print('ПРЕДУПРЕЖДЕНИЕ! В ДАННОЙ ПОЗИЦИИ СУММА СИЛЬНО ОТЛИЧАЕТСЯ!')
+                                    item_warning.append(item_n)
                                 paste(i['cost'])
                             pyautogui.press('enter')
+
                             if shop.text in ['Айсбери', 'Десан'] or format == 'WB': # Если одна из этих накладных, то заводися сумма - шаги влево
                                 pyautogui.press('left', presses=3)
+
                             if checkboxs['name'] or checkboxs['type']:
                                 pyautogui.press('left', presses=6)
                             else:
+                                print('АЛОЫВРАОЛВРПЛОВЫПРЫ')
                                 pyautogui.press('left', presses=4)
                             time.sleep(0.2)
                             pyautogui.press('down')
-                            time.sleep(1)
+                            time.sleep(0.5)
                         else:
                             pyautogui.press('left', presses=2)
                             time.sleep(0.2)
@@ -234,3 +308,4 @@ def start(items, shop, checkboxs, format, type, check_data=None):
     if log: print('Автокликер закончил свою работу!')
     if log: print('\033[0m')
     dc.update_item('АВТОКЛИКЕР', '0')
+    return item_warning

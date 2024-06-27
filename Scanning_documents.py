@@ -2,7 +2,14 @@ import json
 import re
 import logging
 
+import xlrd
+from openpyxl import load_workbook
+
 log = True
+h = ["A", "B", "C", "D", "E", "F", "G", "H", "I", "J", "K", "L", "M", "N", "O", "P",
+     "Q", "R", "S", "T", "U", "V", "W", "X", "Y", "Z","AA", "AB", "AC", "AD", "AE",
+     "AF", "AG", "AH", "AI", "AJ", "AK", "AL", "AM", "AN", "AO", "AP", "AQ", "AR",
+     "AS", "AT", "AU", "AV", "AW", "AX", "AY", "AZ"]
 
 
 def hat(worksheet, i):
@@ -43,14 +50,14 @@ def fix(item, worksheet, i, ii, index, shop):
         item['count'] = ','.join(item['count'].split(' '))
 
     x = 0
-    item['type'] = re.sub('[^а-яА-Я]', '', item['type'])
+    item['type'] = re.sub('[^а-яА-Я,."]', '', item['type'])
     item['count'] = re.sub('[^0-9.,]', '', item['count'])
     item['cost'] = re.sub('[^0-9.,]', '', item['cost'])
-    print('ПРОВЕРКА НАЗВАЗ')
+    print('ПРОВЕРКА Данных после очистки символов:')
     print(item['type'])
     print(item['count'])
     print(item['cost'])
-    while True:
+    while True and shop != 'Коф':
         if item['count'].find(',') != -1 or item['count'].find('.') != -1:
             try:
                 l = len(re.sub('[^0-9.,]', '', str(item['count'].split(',')[1])))
@@ -59,10 +66,11 @@ def fix(item, worksheet, i, ii, index, shop):
                     l = len(re.sub('[^0-9.,]', '', str(item['count'].split('.')[1])))
                 except:
                     l = 0
+            print('Проверка L:' + str(l))
             if l == 3:
                 s = str(worksheet.cell_value(i, index[1] + ii + (1 if x == 0 else 2)))
                 if s.find(',') != -1 or s.find('.') != -1:
-                    print('Проверка L2')
+
                     temp_count1 = str(worksheet.cell_value(i, index[1] + ii + (1 if x == 0 else 2 if x == 1 else 3)))
                     try:
                         print(temp_count1.split(',')[1])
@@ -75,6 +83,7 @@ def fix(item, worksheet, i, ii, index, shop):
                     except:
                         l2 = len(str(worksheet.cell_value(i, index[1] + ii + (
                             1 if x == 0 else 2 if x == 1 else 3))).split('.')[1])
+                    print('Проверка L2:' + str(l2))
                     if l2 == 2:
                         if log: print('1 ИСПРАВЛЕН ID')
                         break
@@ -109,7 +118,7 @@ def fix(item, worksheet, i, ii, index, shop):
             if log: print('COUNT до: ' + str(item['count']))
             if shop != 'Хозы':
                 item['count'] = str(worksheet.cell_value(i, index[1] + ii + (1 if x == 0 else 2)))
-                item['count'] = re.sub('[^0-9]', '', item['count'])
+                item['count'] = re.sub('[^0-9.,]', '', item['count'])
             else:
                 try:
                     int(item['count'])
@@ -140,7 +149,7 @@ def fix(item, worksheet, i, ii, index, shop):
     if log: print('COST2: ' + str(item['cost']))
 
     if shop == 'Матушка':
-        if str(item['cost']).find('%') != -1:
+        if str(item['cost']) in ('10', '20'):
             item['cost'] = str(worksheet.cell_value(i, index[3] + ii + 2))
             if log: print('COST: ' + str(item['cost']))
         elif str(worksheet.cell_value(i, index[3] + ii - 1)).find('%') != -1:
@@ -155,23 +164,24 @@ def fix(item, worksheet, i, ii, index, shop):
             print('ЕБАНАЯ ПРОВЕРКА')
             print(item['cost'])
     elif shop == 'Коф':
-        if len(item['count']) > 8:
-            item['count'] = str(worksheet.cell_value(i, index[1] + ii + 1))
-        if item['cost'].find(',') != -1 or item['cost'].find('.') != -1:
-            try:
-                len_cost = len(item['cost'].split(',')[1])
-            except:
-                len_cost = len(item['cost'].split('.')[1])
-            if len_cost == 3:
-                item['cost'] = str(worksheet.cell_value(i, index[3] + ii + 1))
-                item['cost'] = '.'.join(item['cost'].split(' '))
+        if False:
+            if len(item['count']) > 8:
+                item['count'] = str(worksheet.cell_value(i, index[1] + ii + 1))
+            if item['cost'].find(',') != -1 or item['cost'].find('.') != -1:
                 try:
                     len_cost = len(item['cost'].split(',')[1])
                 except:
                     len_cost = len(item['cost'].split('.')[1])
                 if len_cost == 3:
-                    item['cost'] = str(worksheet.cell_value(i, index[3] + ii + 2))
+                    item['cost'] = str(worksheet.cell_value(i, index[3] + ii + 1))
                     item['cost'] = '.'.join(item['cost'].split(' '))
+                    try:
+                        len_cost = len(item['cost'].split(',')[1])
+                    except:
+                        len_cost = len(item['cost'].split('.')[1])
+                    if len_cost == 3:
+                        item['cost'] = str(worksheet.cell_value(i, index[3] + ii + 2))
+                        item['cost'] = '.'.join(item['cost'].split(' '))
     else:
         print('Поиск ячейки цены')
         print('COST = ' + str(item['cost']))
@@ -254,16 +264,16 @@ def check_(doc_): # Сканер json чека
 def doc(shop, doc_):
     logging.info('СКАН: doc')
     if log: print('\033[46m')
-    import xlrd
+
     items = []
     # Open the Workbook
     if shop == 'Чек':
         return check_(doc_)
     else:
         if shop == 'КофП':
-            index = [0, 1, 2, 3]
+            index = [3, 29, 27, 32]
         elif shop == 'Коф':
-            index = [0, 8, 2, 9]
+            index = [2, 23, 8, 25]
         elif shop == 'Метро':
             index = [0, 3, 2, 4]
         elif shop == 'Матушка':
@@ -283,7 +293,7 @@ def doc(shop, doc_):
         else:
             return False
         try:
-            if doc_.split('.')[1] in ['xls', 'xlsx']:
+            if doc_.split('.')[1] == 'xls':
                 if log: print('Чтение XLS')
                 workbook = xlrd.open_workbook(doc_)
                 worksheet = workbook.sheet_by_index(0)
@@ -292,7 +302,7 @@ def doc(shop, doc_):
                 types = ("шт", 'уп', 'рул', 'упак', 'мст', 'кг', 'кор', 'шг', 'кт', 'уг')
                 header_find = True
                 type_find = True
-                for i in range(0, 40):
+                for i in range(0, 80):
                     if log: print('Цикл сканирования')
                     if header_find and type_find:
                         header = hat(worksheet, i)
@@ -303,7 +313,7 @@ def doc(shop, doc_):
                     try:
                         ii = 0
                         while ii < 6:
-                            temp_Type = re.sub('[^а-яА-Я]', '', str(worksheet.cell_value(i, index[2] + ii)).lower())
+                            temp_Type = re.sub('[^а-яА-Я,."]', '', str(worksheet.cell_value(i, index[2] + ii)).lower())
                             if str(temp_Type).lower() in types:
                                 break
                             else:
@@ -319,7 +329,7 @@ def doc(shop, doc_):
                         if log: print('Тип упаковки: ' + str(worksheet.cell_value(i, index[2] + ii)).lower())
                         if log: print('Наименование: ' + str(worksheet.cell_value(i, index[0] + ii)))
 
-                        temp_Type = re.sub('[^а-яА-Я]', '', temp_Type)
+                        temp_Type = re.sub('[^а-яА-Я,."]', '', temp_Type)
                         print('tempType:')
                         print(temp_Type)
                         if len(temp_Name) > 2 and temp_Type in types:
@@ -350,6 +360,43 @@ def doc(shop, doc_):
                     check = {'date': str(header[1]), 'check': str(header[0]), 'items': items}
                 else:
                     check = items
+                return check
+            elif doc_.split('.')[1] == 'xlsx':
+                if log: print('Чтение XLSX')
+                worksheet = load_workbook(doc_)
+                if log: print(shop)
+
+                id = 1
+                types = ("шт", 'уп', 'рул', 'упак', 'мст', 'кг', 'кор', 'шг', 'кт', 'уг')
+                header_find = True
+                type_find = True
+
+                date = str(worksheet.active['M19'].value).lower()
+                number = str(worksheet.active['P19'].value).lower()
+                header = (number, date)
+
+                for i in range(25, 80):
+                    item = {}
+                    item['id'] = id
+                    if log: print('\n\nЧтение строки:' + str(i))
+
+                    item['name'] = str(worksheet.active[f'{h[index[0]]}{i}'].value)
+                    item['count'] = str(worksheet.active[f'{h[index[1]]}{i}'].value)
+                    item['type'] = str(worksheet.active[f'{h[index[2]]}{i}'].value).lower()
+                    item['cost'] = str(worksheet.active[f'{h[index[3]]}{i}'].value)
+
+                    if str(item['type']).lower() in types:
+                        if log: print(items)
+                        items.append(item)
+                        id += 1
+                    if log: print('item: ' + str(item))
+
+                check = {'date': str(header[1]), 'check': str(header[0]), 'items': items}
+
+
+                if log: print('Результат сканирования:')
+                if log: print('items: ' + str(items))
+                if log: print('header: ' + str(header))
                 return check
         except Exception as e:
             if e == 'list index out of range':
