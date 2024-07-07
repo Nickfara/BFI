@@ -280,12 +280,15 @@ def start(items, shop, checkboxs, format, type, check_data=None):
                                 print('Заводится цена: ' + str(i['cost']))
                                 pyautogui.hotkey('ctrl', 'a')
                                 pyautogui.hotkey('ctrl', 'c')
-                                key = pyperclip.paste()
+                                key = re.sub('[^0-9.,]', '', pyperclip.paste())
 
-                                check_sum = float(i['cost'])/float('.'.join(key.split(',')))
-                                if check_sum > 1.7:
-                                    print('ПРЕДУПРЕЖДЕНИЕ! В ДАННОЙ ПОЗИЦИИ СУММА СИЛЬНО ОТЛИЧАЕТСЯ!')
-                                    item_warning.append(item_n)
+                                try:
+                                    check_sum = float(i['cost'])/float('.'.join(key.split(',')))
+                                    if check_sum > 1.7:
+                                        print('ПРЕДУПРЕЖДЕНИЕ! В ДАННОЙ ПОЗИЦИИ СУММА СИЛЬНО ОТЛИЧАЕТСЯ!')
+                                        item_warning.append(item_n)
+                                except:
+                                    pass
                                 paste(i['cost'])
                             pyautogui.press('enter')
 

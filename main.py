@@ -38,7 +38,6 @@ async def async_autoclick(a, b, c, d, e, f):
         def start_clicker():
             result = autoclick.start(a, b, c, e, f, check_data=d)
             items_warning.append(result) # Запуск автокликера и добавление предупреждений если есть
-            BotiIko.check_warnings()
 
         await loop.run_in_executor(executor, start_clicker)
 
@@ -100,7 +99,7 @@ class BotiIko(MDApp):
         self.shops = sorted(self.shops)  # Сортировка
         self.dialog_wb = None
 
-    def check_warnings(self):
+    def check_warnings(self, instance):
         def check2():
             if len(items_warning) > 0:
                 print(items_warning[0])
@@ -200,7 +199,7 @@ class BotiIko(MDApp):
                                         text_color=self.color_acent_1)
             switch_cost_text = MDLabel(text='Цена:', valign="center", halign="right", theme_text_color='Custom',
                                        text_color=self.color_acent_1)
-            switch_version_text = MDLabel(text='Режим:', valign="center", halign="right", theme_text_color='Custom',
+            switch_version_text = MDLabel(text='Режим:', theme_text_color='Custom',
                                           text_color=self.color_acent_1)
 
             # Структура лэйаутов
@@ -240,6 +239,9 @@ class BotiIko(MDApp):
         btn_launch_autoclick = RFB(text="Запустить автокликер", on_release=self.func_launch_autoclick, size_hint=(1, 1),
                                    text_color=self.color_acent_1, line_color=self.color_acent_2,
                                    md_bg_color=self.color_background_start)
+        btn_check_warnings = RFB(text="Проверить предупреждения", on_release=self.check_warnings, size_hint=(1, 1),
+                                   text_color=self.color_acent_1, line_color=self.color_acent_2,
+                                   md_bg_color=self.color_background_start)
         btn_menu_item = RFIB(icon='pencil-outline', text="Редактировать товар", on_release=self.func_dialog_open,
                              size_hint=(.2, .5), text_color=self.color_acent_2, icon_color=self.color_acent_2,
                              line_color=self.color_panel, font_size=14)
@@ -271,7 +273,7 @@ class BotiIko(MDApp):
             btn_layout = BoxLayout(orientation='vertical', size_hint_x=None, width=350, padding=10, spacing=10,
                                    md_bg_color=self.color_panel)
             # Лэйаут - верхнее меню, с лэйаутами выше
-            top_layout = BoxLayout(orientation='horizontal', padding=(0, 0, 0, 0,), size_hint_y=None, height='200dp',
+            top_layout = BoxLayout(orientation='horizontal', padding=(0, 0, 0, 0,), size_hint_y=None, height='240dp',
                                    md_bg_color=self.color_background_top)
 
             # Лэйаут под листающий список
@@ -293,7 +295,8 @@ class BotiIko(MDApp):
                                           btn_read_layout: {self.btn_doc_read: {}, self.btn_doc_convert: {}},
                                           btn_edit_layout: {BoxLayout(): {}, btn_wb: {}, btn_menu_item: {}},
                                           BoxLayout(): {},
-                                          btn_launch_autoclick: {}
+                                          btn_launch_autoclick: {},
+                                          btn_check_warnings: {}
                                           },
                                      BoxLayout(): {},
                                      switched(): {}

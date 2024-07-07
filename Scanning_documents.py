@@ -391,7 +391,7 @@ def doc(shop, doc_):
                         id += 1
                     if log: print('item: ' + str(item))
 
-                check = {'date': str(header[1]), 'check': str(header[0]), 'items': items}
+                check = {'date': str(header[0]), 'check': str(header[1]), 'items': items}
 
 
                 if log: print('Результат сканирования:')
