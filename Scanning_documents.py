@@ -271,7 +271,7 @@ def doc(shop, doc_):
         return check_(doc_)
     else:
         if shop == 'КофП':
-            index = [3, 29, 27, 32]
+            index = [3, 5, 4, 6]
         elif shop == 'Коф':
             index = [2, 23, 8, 25]
         elif shop == 'Метро':

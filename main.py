@@ -20,7 +20,7 @@ import Database_connections as dc
 import Database_functions
 import Wildberries_parser as WB_Pars
 import autoclick
-
+import parse_metro
 
 items_warning = []
 log = True
@@ -44,7 +44,6 @@ async def async_autoclick(a, b, c, d, e, f):
     else:
         print('Остановка автокликера!')
         dc.update_item('АВТОКЛИКЕР', '0')
-
 
 
 def base_get():
@@ -243,11 +242,18 @@ class BotiIko(MDApp):
                                    text_color=self.color_acent_1, line_color=self.color_acent_2,
                                    md_bg_color=self.color_background_start)
         btn_menu_item = RFIB(icon='pencil-outline', text="Редактировать товар", on_release=self.func_dialog_open,
-                             size_hint=(.2, .5), text_color=self.color_acent_2, icon_color=self.color_acent_2,
+                             size_hint=(1, .5), text_color=self.color_acent_2, icon_color=self.color_acent_2,
                              line_color=self.color_panel, font_size=14)
+
         btn_wb = RFIB(icon='cart-arrow-down', text="Wildberries", on_release=self.wb_parse,
-                      size_hint=(.2, .5), text_color='#8D297F', icon_color='#8D297F',
-                      line_color=self.color_panel, font_size=14)
+                      size_hint=(1, .5), text_color='#8D297F', icon_color='#8D297F',
+                      line_color=self.color_panel, font_size=14, md_bg_color='white')
+        tf_mshop2 = MDTextField(size_hint=(None, None), width=10, halign='right', pos=(-1, 0))
+        tf_mshop = BoxLayout(orientation='horizontal', md_bg_color='green')
+        tf_mshop.add_widget(tf_mshop2)+
+        btn_mshop = RFIB(icon='cart-arrow-down', text="MShop", on_release=self.mshop_parse,
+                      size_hint=(1, .5), text_color='#0000ff', icon_color='#0000ff',
+                      line_color=self.color_panel, font_size=14, md_bg_color='white')
 
         # ______________________________Кнопки
         self.btn_doc_read = RFB(text="Считать", on_release=self.func_doc_read, size_hint=(0.5, None),
@@ -267,8 +273,13 @@ class BotiIko(MDApp):
                                           height=self.btn_select_shop.height)
             # Лэйаут с кнопками-конвертации
             btn_read_layout = BoxLayout(orientation='horizontal', size_hint_y=None, height=self.btn_select_shop.height)
+            # Лэйаут с кнопкой редактирования товаров
+            btn_edit_layout = BoxLayout(orientation='horizontal', size_hint_y=None, height=16)
+            # Лэйаут с парсерами
+            btn_parsers_layout = BoxLayout(orientation='horizontal', size_hint_y=None, height=16)
             # Лэйаут с доп кнопками
-            btn_edit_layout = BoxLayout(orientation='horizontal', size_hint_y=None, height=18)
+            btn_dop_button_layout = BoxLayout(orientation='vertical', spacing=8, size_hint_y=None, height=40)
+
             # Лэйаут с кнопками
             btn_layout = BoxLayout(orientation='vertical', size_hint_x=None, width=350, padding=10, spacing=10,
                                    md_bg_color=self.color_panel)
@@ -293,8 +304,8 @@ class BotiIko(MDApp):
                                     {btn_layout:
                                          {btn_select_layout: {self.btn_select_shop: {}, self.btn_input_doc_name: {}},
                                           btn_read_layout: {self.btn_doc_read: {}, self.btn_doc_convert: {}},
-                                          btn_edit_layout: {BoxLayout(): {}, btn_wb: {}, btn_menu_item: {}},
-                                          BoxLayout(): {},
+                                          btn_dop_button_layout: {btn_parsers_layout: {btn_wb: {}, tf_mshop: {}, btn_mshop: {}}, btn_edit_layout:{btn_menu_item: {}}},
+
                                           btn_launch_autoclick: {},
                                           btn_check_warnings: {}
                                           },
@@ -313,6 +324,8 @@ class BotiIko(MDApp):
                                     for i4 in layout_dict[i][i2][i3]:
                                         if len(layout_dict[i][i2][i3][i4]) > 0:
                                             for i5 in layout_dict[i][i2][i3][i4]:
+                                                for i6 in layout_dict[i][i2][i3][i4][i5]:
+                                                    i5.add_widget(i6)
                                                 i4.add_widget(i5)
                                         i3.add_widget(i4)
                                 i2.add_widget(i3)
@@ -937,6 +950,10 @@ class BotiIko(MDApp):
         self.layout_middle.add_widget(layout_receipts)
         self.layout_menu.remove_widget(self.layout_middle)
         self.layout_menu.add_widget(self.layout_middle)
+
+    def mshop_parse(self, instance):
+        check = parse_metro.get_check(1)
+        if log: print('[main    ][mshop_parse]: ', str(check))
 
 
 # Используем эту функцию для запуска цикла событий Kivy с интеграцией asyncio
