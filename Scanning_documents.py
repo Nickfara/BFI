@@ -231,8 +231,10 @@ def check_(doc_): # Сканер json чека
     if log: print('\033[43m')
     check = None
     with open(doc_, 'r', encoding='utf-8') as json_file:
-        if doc_.split('.')[1] == 'json':
+        if doc_.split('.')[1].lower() in ('json', 'wb', 'ms'):
             data = json.load(json_file)
+            print('ВНУТРЕННОСТИ JSONa')
+            print(data)
             items = data['items']
             if log: print(items)
             filter_items = []
@@ -240,20 +242,26 @@ def check_(doc_): # Сканер json чека
             for i in items: # Фильтрация обьектов
                 temp = 0
                 e = 0
-                while e < len(filter_items):
-                    if i['name'] == filter_items[e]['name']:
-                        filter_items[e]['count'] += i['quantity']
-                        filter_items[e]['sum'] += i['sum']/100
-                        filter_items[e]['cost'] = filter_items[e]['sum'] / filter_items[e]['count']
-                        temp = 1
-                    e += 1
+                if doc_.split('.')[1].lower() not in ('wb', 'ms'):
+                    while e < len(filter_items):
+                        if i['name'] == filter_items[e]['name']:
+                            filter_items[e]['count'] += i['quantity']
+                            filter_items[e]['sum'] += i['sum']/100
+                            filter_items[e]['cost'] = filter_items[e]['sum'] / filter_items[e]['count']
+                            temp = 1
+                        e += 1
 
-                if temp == 0:
-                    filter_items.append({'id': id, 'name': i['name'], 'cost': i['price']/100,
-                                     'count': i['quantity'], 'sum': i['sum']/100, 'type': 'шт'})
-                    id += 1
+                    if temp == 0:
+                        filter_items.append({'id': id, 'name': i['name'], 'cost': float(i['price'])/100,
+                                         'count': i['quantity'], 'sum': i['sum']/100, 'type': 'шт'})
+                        id += 1
+                else:
+                    filter_items = items
 
-            check = {'date': data['dateTime'], 'check': data['requestNumber'], 'items': filter_items, }
+            if doc_.split('.')[1].lower() not in ('wb', 'ms'):
+                check = {'date': data['dateTime'], 'check': data['requestNumber'], 'items': filter_items, }
+            else:
+                check = {'date': data['dateTime'], 'check': data['requestNumber'], 'items': filter_items, }
             return check
         else:
             return False
@@ -264,7 +272,6 @@ def check_(doc_): # Сканер json чека
 def doc(shop, doc_):
     logging.info('СКАН: doc')
     if log: print('\033[46m')
-
     items = []
     # Open the Workbook
     if shop == 'Чек':
