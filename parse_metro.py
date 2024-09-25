@@ -22,7 +22,12 @@ def auth():
 
     browser.find_element(By.ID, 'user_id').send_keys("bokova_shura@mail.ru")  # Ввод логина
     browser.find_element(By.ID, 'password').send_keys("Dlink1980!!!")  # Ввод пароля
-    browser.find_element(By.ID, 'submit').click()  # Нажатие кнопки "Войти
+    while True:
+        try:
+            browser.find_element(By.ID, 'submit').click()  # Нажатие кнопки "Войти
+            break
+        except:
+            time.sleep(1)
 
     if log: print('[parse_metro    ][auth]: ', str('Успешная авторизация!'))
 
@@ -76,7 +81,10 @@ def get_check(num_check=1):
     date = str(items_date).split('Дата доставки:</span>')[1].split('</span></div><div class="ca-suborder-lc__component">')[0]
 
     import re
-    date = re.sub("[^0-9-:T]", "", date)
+
+    date = re.sub("[^0-9-:T/]", "", date)
+
+    date = '-'.join(date.split('/')) + 'T09:00'
     items_dict = []
 
     id_item = 1
@@ -104,7 +112,7 @@ def get_check(num_check=1):
                 items_dict.append(item_end)
             id_item += 1
 
-    doc = {'dateTime': '-'.join(date.split('/')) + 'T09:00',
+    doc = {'dateTime': date,
            'requestNumber': 'Неизвестно (Временно)',
            'items': items_dict
            }

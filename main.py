@@ -77,9 +77,12 @@ async def async_mshop(tf_mshop2, onlyfiles):
 
             numb = 1
             while numb < 10:
-                name = f'documents/{check["dateTime"].split("T")[0]}({numb}).MS'
+                name = f'{check["dateTime"].split("T")[0]}({numb}).MS'
+                print(name)
                 if name not in onlyfiles:
-                    with open(name, 'w', encoding='utf-8') as fp:
+                    print('Имени нет в папке')
+                    print(onlyfiles)
+                    with open(f'documents/{name}', 'w', encoding='utf-8') as fp:
                         json.dump(check, fp)
                     numb = 10
                 numb += 1
@@ -296,8 +299,9 @@ class BotiIko(MDApp):
                       size_hint=(1, .7), text_color='#8D297F', icon_color='#8D297F',
                       line_color=self.color_panel, font_size=14, md_bg_color='white')
         self.tf_mshop2 = MDTextField(size_hint=(None, None), width=10, halign='right', pos=(-1, 0))
-        tf_mshop = BoxLayout(orientation='horizontal')
+        tf_mshop = BoxLayout(orientation='horizontal', md_bg_color='white')
         tf_mshop.add_widget(self.tf_mshop2)
+
         btn_mshop = RFIB(icon='cart-arrow-down', text="MShop", on_release=self.mshop_parse,
                          size_hint=(1, .7), text_color='#0000ff', icon_color='#0000ff',
                          line_color=self.color_panel, font_size=14)
@@ -779,7 +783,8 @@ class BotiIko(MDApp):
                                     halign='left',
                                     on_text_validate=self.func_dialog_enter,
                                     text_color_focus=self.color_acent_1, line_color_focus=self.color_acent_2,
-                                    hint_text_color_focus=self.color_acent_2)
+                                    hint_text_color_focus=self.color_acent_2
+            )
 
             self.token = MDTextField(text=base_get()[0] if base_get() is not None else '',
                                      hint_text="Токен",
@@ -1016,6 +1021,7 @@ class BotiIko(MDApp):
         self.layout_menu.add_widget(self.layout_middle)
 
     def mshop_parse(self, instance):
+        self.scan_file()
         asyncio.ensure_future(async_mshop(self.tf_mshop2, self.onlyfiles))
 
 
