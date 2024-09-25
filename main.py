@@ -29,6 +29,7 @@ items_warning = []
 log = True
 dc.update_item('АВТОКЛИКЕР', '0')
 
+async_mshop_antimissclick = [True]
 
 async def async_autoclick(a, b, c, d, e, f):
     check = copy(dc.get_item('АВТОКЛИКЕР'))['names']
@@ -49,8 +50,42 @@ async def async_autoclick(a, b, c, d, e, f):
         print('Остановка автокликера!')
         dc.update_item('АВТОКЛИКЕР', '0')
 
-async def async_mshop():
-    pass
+
+async def async_mshop(tf_mshop2, onlyfiles):
+    if async_mshop_antimissclick[0]:
+        async_mshop_antimissclick[0] = False
+
+        loop = asyncio.get_event_loop()
+        from concurrent.futures import ThreadPoolExecutor
+        executor = ThreadPoolExecutor()
+
+        def launch_parser():
+            try:
+                numb_doc = int(tf_mshop2.text)
+            except:
+                numb_doc = 1
+
+            try:
+                check = parse_metro.get_check(numb_doc)
+            except:
+                async_mshop_antimissclick[0] = True
+                return
+
+            if log: print('[main    ][mshop_parse]: ', str(check))
+
+            import json
+
+            numb = 1
+            while numb < 10:
+                name = f'documents/{check["dateTime"].split("T")[0]}({numb}).MS'
+                if name not in onlyfiles:
+                    with open(name, 'w', encoding='utf-8') as fp:
+                        json.dump(check, fp)
+                    numb = 10
+                numb += 1
+            async_mshop_antimissclick[0] = True
+
+        await loop.run_in_executor(executor, launch_parser)
 
 
 def base_get():
@@ -981,23 +1016,7 @@ class BotiIko(MDApp):
         self.layout_menu.add_widget(self.layout_middle)
 
     def mshop_parse(self, instance):
-        try:
-            numb_doc = int(self.tf_mshop2.text)
-        except:
-            numb_doc = 1
-
-        check = parse_metro.get_check(numb_doc)
-        if log: print('[main    ][mshop_parse]: ', str(check))
-
-        import json
-
-        numb = 1
-        while numb < 10:
-            if f'{numb}.MS' not in self.onlyfiles:
-                with open(f'documents/{numb}.MS', 'w', encoding='utf-8') as fp:
-                    json.dump(check, fp)
-                numb = 10
-            numb += 1
+        asyncio.ensure_future(async_mshop(self.tf_mshop2, self.onlyfiles))
 
 
 # Используем эту функцию для запуска цикла событий Kivy с интеграцией asyncio

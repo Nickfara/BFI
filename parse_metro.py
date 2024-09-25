@@ -4,15 +4,17 @@ from selenium.webdriver.common.by import By
 from bs4 import BeautifulSoup
 import time
 
+log = True
 
 #!/usr/bin/env python # -* - coding: utf-8-* -
 print ("Кодировка uft-8 включена")
 
-mnozitel_ozhidaniya = 1 # Множитель паузы ожидания на сайте
+mnozitel_ozhidaniya = 6 # Множитель паузы ожидания на сайте
 
 def auth():
     browser = Chrome()  # Загрузка браузера
 
+    if log: print('[parse_metro    ][auth]: ', str('Начало авторизации!'))
     url = "https://idam.metro-cc.ru/web/Signin?state=a22fc20c7a8f4cc29527582a9b69f480&scope=openid+clnt%3DBTEX&locale_id=ru-RU&redirect_uri=https%3A%2F%2Fmshop.metro-cc.ru%2Fshop%2Fportal%2Fmy-orders%2Fall%3FidamRedirect%3D1&client_id=BTEX&country_code=RU&realm_id=SSO_CUST_RU&user_type=CUST&DR-Trace-ID=idam-trace-id&code_challenge=X24I_T1kLXCRhV-o24wLBVRODgj9AULUni3HeJ_21G4&code_challenge_method=S256&response_type=code"
 
 
@@ -20,26 +22,48 @@ def auth():
 
     browser.find_element(By.ID, 'user_id').send_keys("bokova_shura@mail.ru")  # Ввод логина
     browser.find_element(By.ID, 'password').send_keys("Dlink1980!!!")  # Ввод пароля
-    browser.find_element(By.ID, 'submit').click()  # Нажатие кнопки "Войти"
-    time.sleep(8*mnozitel_ozhidaniya)
+    browser.find_element(By.ID, 'submit').click()  # Нажатие кнопки "Войти
 
-    browser.find_element(By.XPATH,
-                         '/html/body/div[1]/div/div/div[2]/div[2]/div[3]/div[3]/div/div/div/div/div/div/div[1]/div/div').click()
-    time.sleep(3*mnozitel_ozhidaniya)
+    if log: print('[parse_metro    ][auth]: ', str('Успешная авторизация!'))
+
+    while True:
+        try:
+            browser.find_element(By.XPATH,'/html/body/div[1]/div/div/div[2]/div[2]/div[3]/div[3]/div/div/div/div/div/div/div[1]/div/div').click()
+            break
+        except:
+            time.sleep(1)
+
+    if log: print('[parse_metro    ][auth]: ', str('Выбор адреса доставки выполнен!'))
     return browser
 
 
 def get_check(num_check=1):
     check_number = 1 + num_check  # Последний в списке начинается с: 2
     url2 = 'https://mshop.metro-cc.ru/shop/portal/my-orders/all?itm_pm=cookie_consent_accept_button'
+
     browser = auth()
 
-    browser.get(url2)
-    time.sleep(3*mnozitel_ozhidaniya)
-    browser.find_element(By.XPATH, f'/html/body/div[1]/div/div/div[2]/div[2]/div[3]/div[3]/div/div[1]/div[2]/div[2]/div[1]/div/div/div[{check_number}]/div/div[2]/a').click()
-    time.sleep(3*mnozitel_ozhidaniya)
-    browser.find_element(By.XPATH, '/html/body/div[1]/div/div/div[2]/div[2]/div[3]/div[3]/div/div[1]/div[2]/div[2]/div[1]/div/div[2]/div/div[2]/div/div/div[2]/div[3]')
+    while True:
+        try:
+            browser.get(url2)
+            if log: print('[parse_metro    ][get_check]: ', str('Корзина открыта!'))
+            break
+        except:
+            time.sleep(1)
 
+    while True:
+        try:
+            browser.find_element(By.XPATH,f'/html/body/div[1]/div/div/div[2]/div[2]/div[3]/div[3]/div/div[1]/div[2]/div[2]/div[1]/div/div/div[{check_number}]/div/div[2]/a').click()
+            break
+        except:
+            time.sleep(1)
+
+    while True:
+        try:
+            browser.find_element(By.XPATH,'/html/body/div[1]/div/div/div[2]/div[2]/div[3]/div[3]/div/div[1]/div[2]/div[2]/div[1]/div/div[2]/div/div[2]/div/div/div[2]/div[3]')
+            break
+        except:
+            time.sleep(1)
 
 
     soup = BeautifulSoup(browser.page_source, "html.parser") # Парсинг готового html кода
@@ -85,5 +109,3 @@ def get_check(num_check=1):
            'items': items_dict
            }
     return doc
-
-get_check(num_check=1)
