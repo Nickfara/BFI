@@ -29,7 +29,6 @@ def get_info(token, last_date_g):
 
     last_date = datetime.datetime.strptime(last_date_g, '%Y-%m-%dT%H:%M:%S.%f')
 
-
     def errors(response):
         if response.status_code == 200:
             return {'status': True, 'text': 'Успешно', 'response': response}
@@ -42,9 +41,8 @@ def get_info(token, last_date_g):
         else:
             return {'status': False, 'text': response.json()['meta']['message'], 'response': response}
 
-
     def api(link, get_status):
-        s = requests.Session() # Создание сессии
+        s = requests.Session()  # Создание сессии
         s.headers.update(
             {'User-Agent': 'okhttp/5.3.1'})  # Заголовок с данными
         s.headers.update({'Authorization': 'Bearer {}'.format(token)})
@@ -53,12 +51,11 @@ def get_info(token, last_date_g):
         else:
             response = s.post(link)
 
-        #response = errors(response)
+        # response = errors(response)
         try:
             return response.json()
         except:
             return response
-
 
     receipts = api(link_receipts, 0)['value']['data']['receipts']
 
@@ -105,13 +102,14 @@ def get_info(token, last_date_g):
         last = len(filtered_name)
         while i < last:
             if filtered_name[i].lower().find('чай') != -1:
-                base.append({'название': filtered_name[i],'цена за шт': filtered_price[i],'количество': filtered_count[i],'cтоимость': filtered_price_all[i],})
+                base.append(
+                    {'название': filtered_name[i], 'цена за шт': filtered_price[i], 'количество': filtered_count[i],
+                     'cтоимость': filtered_price_all[i], })
             i += 1
         date = str(soup.findAll('div', class_='check-header-column gray')).split('\n')
         tea_info.append(date[1])
         tea_info.append(date[4])
         return base
-
 
     tea_receipts = []
     for i in new_receipts:
@@ -135,8 +133,10 @@ def print_checks():
     checks = get_info(token, last_date_g)
     if len(checks) > 0:
         for check in checks:
-            print('\n\n______________________________________________________________________________________________________')
-            print('_______________________________________________________________________________________________________')
+            print(
+                '\n\n______________________________________________________________________________________________________')
+            print(
+                '_______________________________________________________________________________________________________')
             print(check['number'])
             print(check['date'])
             pos = 0

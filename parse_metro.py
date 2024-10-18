@@ -1,15 +1,48 @@
+import time
+
+from bs4 import BeautifulSoup
 from selenium.webdriver import Chrome
 from selenium.webdriver.common.by import By
 
-from bs4 import BeautifulSoup
-import time
-
 log = True
 
-#!/usr/bin/env python # -* - coding: utf-8-* -
-print ("Кодировка uft-8 включена")
+# !/usr/bin/env python # -* - coding: utf-8-* -
+print("Кодировка uft-8 включена")
 
-mnozitel_ozhidaniya = 6 # Множитель паузы ожидания на сайте
+mnozitel_ozhidaniya = 6  # Множитель паузы ожидания на сайте
+
+
+def cirkle(numb, lengue = 0):
+    try:
+        float(numb)
+    except:
+        print('Число не является дробным')
+        return None
+
+    numb = str(numb)
+    right_numb = numb.split('.')[1]
+    left_numb = numb.split('.')[0]
+
+    while len(right_numb) > lengue:
+        
+        if int(right_numb[-1]) >= 5:
+            add = 1
+        else:
+            add = 0
+
+        if len(right_numb) > 2:
+            right_numb = right_numb[:-1]
+            new_last_numb = str(int(right_numb[-1]) + add)
+            right_numb = right_numb[:-1]
+            right_numb = right_numb + new_last_numb
+        else:
+            right_numb = ''
+            new = int(left_numb) + add
+            return new
+
+    new = str(left_numb) + '.' + str(right_numb)
+    return float(new)
+
 
 def auth():
     browser = Chrome()  # Загрузка браузера
@@ -17,11 +50,12 @@ def auth():
     if log: print('[parse_metro    ][auth]: ', str('Начало авторизации!'))
     url = "https://idam.metro-cc.ru/web/Signin?state=a22fc20c7a8f4cc29527582a9b69f480&scope=openid+clnt%3DBTEX&locale_id=ru-RU&redirect_uri=https%3A%2F%2Fmshop.metro-cc.ru%2Fshop%2Fportal%2Fmy-orders%2Fall%3FidamRedirect%3D1&client_id=BTEX&country_code=RU&realm_id=SSO_CUST_RU&user_type=CUST&DR-Trace-ID=idam-trace-id&code_challenge=X24I_T1kLXCRhV-o24wLBVRODgj9AULUni3HeJ_21G4&code_challenge_method=S256&response_type=code"
 
-
     browser.get(url)
+    browser.execute_script("document.body.style.zoom='15%'")
 
     browser.find_element(By.ID, 'user_id').send_keys("bokova_shura@mail.ru")  # Ввод логина
     browser.find_element(By.ID, 'password').send_keys("Dlink1980!!!")  # Ввод пароля
+
     while True:
         try:
             browser.find_element(By.ID, 'submit').click()  # Нажатие кнопки "Войти
@@ -33,10 +67,12 @@ def auth():
 
     while True:
         try:
-            browser.find_element(By.XPATH,'/html/body/div[1]/div/div/div[2]/div[2]/div[3]/div[3]/div/div/div/div/div/div/div[1]/div/div').click()
+            browser.find_element(By.XPATH,
+                                 '/html/body/div[1]/div/div/div[2]/div[2]/div[3]/div[3]/div/div/div/div/div/div/div[1]/div/div').click()
             break
         except:
             time.sleep(1)
+            browser.execute_script("document.body.style.zoom='15%'")
 
     if log: print('[parse_metro    ][auth]: ', str('Выбор адреса доставки выполнен!'))
     return browser
@@ -55,30 +91,35 @@ def get_check(num_check=1):
             break
         except:
             time.sleep(1)
+            browser.execute_script("document.body.style.zoom='15%'")
 
     while True:
         try:
-            browser.find_element(By.XPATH,f'/html/body/div[1]/div/div/div[2]/div[2]/div[3]/div[3]/div/div[1]/div[2]/div[2]/div[1]/div/div/div[{check_number}]/div/div[2]/a').click()
+            browser.find_element(By.XPATH,
+                                 f'/html/body/div[1]/div/div/div[2]/div[2]/div[3]/div[3]/div/div[1]/div[2]/div[2]/div[1]/div/div/div[{check_number}]/div/div[2]/a').click()
             break
         except:
             time.sleep(1)
+            browser.execute_script("document.body.style.zoom='15%'")
 
     while True:
         try:
-            browser.find_element(By.XPATH,'/html/body/div[1]/div/div/div[2]/div[2]/div[3]/div[3]/div/div[1]/div[2]/div[2]/div[1]/div/div[2]/div/div[2]/div/div/div[2]/div[3]')
+            browser.find_element(By.XPATH,
+                                 '/html/body/div[1]/div/div/div[2]/div[2]/div[3]/div[3]/div/div[1]/div[2]/div[2]/div[1]/div/div[2]/div/div[2]/div/div/div[2]/div[3]')
             break
         except:
             time.sleep(1)
+            browser.execute_script("document.body.style.zoom='15%'")
 
-
-    soup = BeautifulSoup(browser.page_source, "html.parser") # Парсинг готового html кода
+    soup = BeautifulSoup(browser.page_source, "html.parser")  # Парсинг готового html кода
 
     items = soup.findAll('div', class_='mfcss_card-article-2--container-grid')
     date_doc = soup.findAll('div', class_='ca-suborder-lc')
 
     date = ''
     items_date = BeautifulSoup(str(date_doc), "html.parser")
-    date = str(items_date).split('Дата доставки:</span>')[1].split('</span></div><div class="ca-suborder-lc__component">')[0]
+    date = \
+    str(items_date).split('Дата доставки:</span>')[1].split('</span></div><div class="ca-suborder-lc__component">')[0]
 
     import re
 
@@ -104,11 +145,26 @@ def get_check(num_check=1):
             if len(item_data_dict) > 5:
                 item_end['id'] = id_item
                 item_end['name'] = item_data_dict[1]
-                item_end['cost'] = re.sub("[^0-9,.]", "", item_data_dict[3])
-                item_end['count'] = re.sub("[^0-9,.]", "", item_data_dict[4])
-                item_end['sum'] = re.sub("[^0-9,.]", "", item_data_dict[5].split('₽')[1])
+                if '/' in item_data_dict[4]:
+                    item_end['count'] = re.sub("[^0-9,.]", "", item_data_dict[4].split(' / ')[0])
+                    print('Разделение по черте')
+                else:
+                    item_end['count'] = re.sub("[^0-9,.]", "", item_data_dict[4].split(' ')[0])
+                    print('Разделение по пробелу')
 
-            if item_data_dict != '':
+                try:
+                    item_end['count'] = float(item_end['count'])
+                    item_end['sum'] = float(re.sub("[^0-9,.]", "", item_data_dict[5].split('₽')[1]).replace(',', '.'))
+                    item_end['cost'] = cirkle((item_end['sum'] / item_end['count']), 2) # Получение стоимости за шт, делением суммы на количество и Округление до двух знаков
+                except:
+                    item_end['sum'] = -1.00
+                    item_end['cost'] = -1.00
+                    item_end['count'] = -1.000
+
+                item_end['type'] = re.sub("[^аА-яЯ]", "", item_data_dict[4])
+
+
+            if item_data_dict != '' and item_end['count'] != 0:
                 items_dict.append(item_end)
             id_item += 1
 
@@ -117,3 +173,5 @@ def get_check(num_check=1):
            'items': items_dict
            }
     return doc
+
+

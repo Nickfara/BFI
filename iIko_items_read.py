@@ -1,8 +1,9 @@
 import logging
+
 log = True
 
 
-def items(items = "iIko_items_exel_base.xlsx"):
+def items(items="iIko_items_exel_base.xlsx"):
     logging.info('iIko_items_read: items')
     import xlrd
     workbook = xlrd.open_workbook(items)
@@ -20,4 +21,3 @@ def items(items = "iIko_items_exel_base.xlsx"):
                 pass
         if log: print('')
     return items
-

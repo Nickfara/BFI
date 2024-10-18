@@ -1,6 +1,7 @@
-import pyautogui
 import time
-import pyperclip
+
+import pyautogui
+
 
 def site():
     def start():
@@ -38,10 +39,10 @@ def site():
         pyautogui.hotkey('alt', 'tab')
         time.sleep(2)
 
-
     time.sleep(10)
     for i in range(0, 16):
         start()
+
 
 def test():
     from openpyxl import load_workbook
@@ -49,10 +50,5 @@ def test():
     stroka = worksheet.active[f'A2'].value
     print(stroka)
 
+
 test()
-
-
-
-
-
-

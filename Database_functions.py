@@ -1,6 +1,7 @@
-import json
 import logging
+
 import Database_connections as db
+
 log = True
 
 try:
@@ -16,7 +17,7 @@ def take_items(item=None):
     logging.info('ФУНК: take_items')
     items = db.get_item(item)
     if items == None:
-        return('Ошибка')
+        return ('Ошибка')
     return items
 
 
@@ -72,7 +73,7 @@ def update_items(item=None, name=None, items=None):
         return False
 
 
-def get_item(name = None):
+def get_item(name=None):
     logging.info('ФУНК: get_item')
     if name is not None:
         if log: print('NAME IS A:')

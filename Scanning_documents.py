@@ -1,13 +1,13 @@
 import json
-import re
 import logging
+import re
 
 import xlrd
 from openpyxl import load_workbook
 
 log = True
 h = ["A", "B", "C", "D", "E", "F", "G", "H", "I", "J", "K", "L", "M", "N", "O", "P",
-     "Q", "R", "S", "T", "U", "V", "W", "X", "Y", "Z","AA", "AB", "AC", "AD", "AE",
+     "Q", "R", "S", "T", "U", "V", "W", "X", "Y", "Z", "AA", "AB", "AC", "AD", "AE",
      "AF", "AG", "AH", "AI", "AJ", "AK", "AL", "AM", "AN", "AO", "AP", "AQ", "AR",
      "AS", "AT", "AU", "AV", "AW", "AX", "AY", "AZ"]
 
@@ -25,10 +25,10 @@ def hat(worksheet, i):
             print(str(worksheet.cell_value(i, i2)).lower())
             if 'документ' in str(worksheet.cell_value(i, i2)).lower():
                 find1 = True
-                number = str(worksheet.cell_value(i+1, i2))
+                number = str(worksheet.cell_value(i + 1, i2))
             if 'дата' in str(worksheet.cell_value(i, i2)).lower():
                 find2 = True
-                date = str(worksheet.cell_value(i+1, i2)).lower()
+                date = str(worksheet.cell_value(i + 1, i2)).lower()
         except:
             pass
 
@@ -78,7 +78,8 @@ def fix(item, worksheet, i, ii, index, shop):
                         print(temp_count1.split('.')[1])
                     try:
                         l2 = len(
-                            re.sub('[^0-9.,]', '', str(worksheet.cell_value(i, index[1] + ii + (1 if x == 0 else 2 if x == 1 else 3))).split(
+                            re.sub('[^0-9.,]', '', str(worksheet.cell_value(i, index[1] + ii + (
+                                1 if x == 0 else 2 if x == 1 else 3))).split(
                                 ',')[1]))
                     except:
                         l2 = len(str(worksheet.cell_value(i, index[1] + ii + (
@@ -136,14 +137,13 @@ def fix(item, worksheet, i, ii, index, shop):
 
     if log: print('COST: ' + str(item['cost']))
 
-
     if item['cost'].find(' ') != -1:
         item['cost'] = '.'.join(item['cost'].split(' '))
     if item['cost'].find(',') != -1:
         item['cost'] = '.'.join(item['cost'].split(','))
     if len(item['cost'].split('.')) > 2:
         temp = item['cost'].split('.')
-        temp2 = str(temp[0]) + '' +str(temp[1]) + '.' + str(temp[2])
+        temp2 = str(temp[0]) + '' + str(temp[1]) + '.' + str(temp[2])
         item['cost'] = temp2
 
     if log: print('COST2: ' + str(item['cost']))
@@ -226,7 +226,7 @@ def fix(item, worksheet, i, ii, index, shop):
     return item
 
 
-def check_(doc_): # Сканер json чека
+def check_(doc_):  # Сканер json чека
     logging.info('СКАН: check')
     if log: print('\033[43m')
     check = None
@@ -239,21 +239,21 @@ def check_(doc_): # Сканер json чека
             if log: print(items)
             filter_items = []
             id = 1
-            for i in items: # Фильтрация обьектов
+            for i in items:  # Фильтрация обьектов
                 temp = 0
                 e = 0
                 if doc_.split('.')[1].lower() not in ('wb', 'ms'):
                     while e < len(filter_items):
                         if i['name'] == filter_items[e]['name']:
                             filter_items[e]['count'] += i['quantity']
-                            filter_items[e]['sum'] += i['sum']/100
+                            filter_items[e]['sum'] += i['sum'] / 100
                             filter_items[e]['cost'] = filter_items[e]['sum'] / filter_items[e]['count']
                             temp = 1
                         e += 1
 
                     if temp == 0:
-                        filter_items.append({'id': id, 'name': i['name'], 'cost': float(i['price'])/100,
-                                         'count': i['quantity'], 'sum': i['sum']/100, 'type': 'шт'})
+                        filter_items.append({'id': id, 'name': i['name'], 'cost': float(i['price']) / 100,
+                                             'count': i['quantity'], 'sum': i['sum'] / 100, 'type': 'шт'})
                         id += 1
                 else:
                     filter_items = items
@@ -348,7 +348,7 @@ def doc(shop, doc_):
                             item['type'] = str(worksheet.cell_value(i, index[2] + ii)).lower()
                             item['cost'] = str(worksheet.cell_value(i, index[3] + ii))
 
-                            item = fix(item, worksheet, i, ii, index, shop) # Коррекция таблицы
+                            item = fix(item, worksheet, i, ii, index, shop)  # Коррекция таблицы
 
                             if log: print('TYPE: ' + item['type'])
 
@@ -399,7 +399,6 @@ def doc(shop, doc_):
                     if log: print('item: ' + str(item))
 
                 check = {'date': str(header[0]), 'check': str(header[1]), 'items': items}
-
 
                 if log: print('Результат сканирования:')
                 if log: print('items: ' + str(items))

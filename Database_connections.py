@@ -1,6 +1,8 @@
-import sqlite3
 import logging
+import sqlite3
+
 log = False
+
 
 # Соединение с row
 def get_db_connection():
@@ -49,7 +51,11 @@ def get_item_names(name=None):
     conn = get_db_connection()
     if type(name) is str:
         name = name.lower()
-        user_row = conn.execute("SELECT * FROM Items WHERE names LIKE ? OR names LIKE ? OR names LIKE ? OR names LIKE ?", (f'{name}', f'{name}///%', f'%///{name}', f'%///{name}///%')).fetchone()
+        print('Проверка ИЗ БД')
+        print(name)
+        user_row = conn.execute(
+            "SELECT * FROM Items WHERE names LIKE ? OR names LIKE ? OR names LIKE ? OR names LIKE ?",
+            (f'{name}', f'{name}///%', f'%///{name}', f'%///{name}///%')).fetchone()
         if log: print(user_row)
         conn.close()
         if user_row:
@@ -132,7 +138,8 @@ def clear_item(item=None, names=None):
     if log: print('\033[44m')
     if item != None:
         conn = get_db_connection()
-        conn.execute('UPDATE Items SET item = ?, names = ? WHERE item = ?', (str(item).lower(), str(names).lower(), str(item).lower()))
+        conn.execute('UPDATE Items SET item = ?, names = ? WHERE item = ?',
+                     (str(item).lower(), str(names).lower(), str(item).lower()))
         conn.commit()
         conn.close()
         return True
@@ -186,5 +193,5 @@ def lowered_base():
     if log: print('Запрос к базе завершен')
     if log: print('\033[0m')
 
-lowered_base()
 
+lowered_base()

@@ -18,18 +18,19 @@ from kivymd.uix.textfield import MDTextField
 
 import Database_connections as dc
 import Database_functions
-import Wildberries_parser as WB_Pars
+import get_wb as WB_Pars
 import autoclick
 import parse_metro
 
-#!/usr/bin/env python # -* - coding: utf-8-* -
-print ("Кодировка uft-8 включена")
+# !/usr/bin/env python # -* - coding: utf-8-* -
+print("Кодировка uft-8 включена")
 
 items_warning = []
 log = True
 dc.update_item('АВТОКЛИКЕР', '0')
 
 async_mshop_antimissclick = [True]
+
 
 async def async_autoclick(a, b, c, d, e, f):
     check = copy(dc.get_item('АВТОКЛИКЕР'))['names']
@@ -51,7 +52,7 @@ async def async_autoclick(a, b, c, d, e, f):
         dc.update_item('АВТОКЛИКЕР', '0')
 
 
-async def async_mshop(tf_mshop2, onlyfiles):
+async def async_mshop(tf_mshop2):
     if async_mshop_antimissclick[0]:
         async_mshop_antimissclick[0] = False
 
@@ -60,32 +61,66 @@ async def async_mshop(tf_mshop2, onlyfiles):
         executor = ThreadPoolExecutor()
 
         def launch_parser():
-            try:
-                numb_doc = int(tf_mshop2.text)
-            except:
-                numb_doc = 1
+            def save_doc(check):
+                if log: print('[main    ][mshop_parse]: ', str(check))
+
+                import json
+
+                numb = 1
+                while numb < 10:
+                    name = f'{check["dateTime"].split("T")[0]}({numb}).MS'
+                    print(name)
+                    onlyfiles = [f for f in listdir('documents') if isfile(join('documents', f))]
+                    if name not in onlyfiles:
+                        print('Имени нет в папке')
+                        print(onlyfiles)
+                        with open(f'documents/{name}', 'w', encoding='utf-8') as fp:
+                            json.dump(check, fp)
+                        numb = 10
+                    numb += 1
 
             try:
-                check = parse_metro.get_check(numb_doc)
+                numb_doc = tf_mshop2.text
+                print('numb_doc:')
+                print(numb_doc)
+                if "-" in numb_doc:
+                    numb_doc = numb_doc.split("-")
+                    int(numb_doc[0])
+                    int(numb_doc[1])
+                    more = True
+                    more_type = 0
+                elif "," in numb_doc:
+                    numb_doc = numb_doc.split(",")
+                    for i in numb_doc:
+                        int(i)
+                    more_type = 1
+                else:
+                    numb_doc = int(tf_mshop2.text)
+                    more = False
+            except:
+                numb_doc = 1
+                more = False
+
+
+            try:
+                if more:
+                    if more_type == '1':
+                        doc_ind = numb_doc
+                    else:
+                        doc_ind = range(int(numb_doc[0]), int(numb_doc[1]))
+
+                    for i in doc_ind:
+                        check = parse_metro.get_check(i)
+                        save_doc(check)
+                else:
+                    check = parse_metro.get_check(int(numb_doc))
+                    save_doc(check)
             except:
                 async_mshop_antimissclick[0] = True
                 return
 
-            if log: print('[main    ][mshop_parse]: ', str(check))
 
-            import json
 
-            numb = 1
-            while numb < 10:
-                name = f'{check["dateTime"].split("T")[0]}({numb}).MS'
-                print(name)
-                if name not in onlyfiles:
-                    print('Имени нет в папке')
-                    print(onlyfiles)
-                    with open(f'documents/{name}', 'w', encoding='utf-8') as fp:
-                        json.dump(check, fp)
-                    numb = 10
-                numb += 1
             async_mshop_antimissclick[0] = True
 
         await loop.run_in_executor(executor, launch_parser)
@@ -93,7 +128,7 @@ async def async_mshop(tf_mshop2, onlyfiles):
 
 def base_get():
     logging.info('ИНТЕРФЕЙС: base_get')
-    with open('Wildberries_database.txt', 'r', encoding='utf-8') as f:
+    with open('get_wb_db.txt', 'r', encoding='utf-8') as f:
         data = f.read()
         if data.find('|') != -1:
             data = data.split('|')
@@ -104,7 +139,7 @@ def base_get():
 
 def base_push(string):
     logging.info('ИНТЕРФЕЙС: base_push')
-    with open('Wildberries_database.txt', 'w', encoding='utf-8') as f:
+    with open('get_wb_db.txt', 'w', encoding='utf-8') as f:
         if log: print('Чтение файла базы WB...')
         if log: print(string)
         f.write(string)
@@ -142,6 +177,7 @@ class BotiIko(MDApp):
                       'Хозы', 'Юнит', 'Выпечка', 'Айсберри', 'Десан', 'Виста', 'Кофе', 'Арома']  # Названия поставщиков
         self.shops = sorted(self.shops)  # Сортировка
         self.dialog_wb = None
+        self.enter_1 = False # Проверка выбран ли товар в списке
 
     def check_warnings(self, instance):
         def check2():
@@ -450,8 +486,34 @@ class BotiIko(MDApp):
         else:
             self.ind_convert_item = 0
             for i in self.doc:
-                response = Database_functions.get_item(i)
                 self.name_ = i
+
+                if self.btn_input_doc_name.text.split('.')[1].lower() == 'ms': # Перестановка количества товара с конца названия в начало
+                    split_name = self.name_['name'].split(' ')
+                    len_name = len(split_name)
+                    count_name = split_name[len_name-1]
+                    content_check = False
+                    for type_ in ('г', 'кг', 'л', 'шт', 'мл'): # Проверка на правильность количества
+                        if type_ in count_name.lower():
+                            for ind_name in count_name.lower():
+                                try:
+                                    int(ind_name)
+                                    content_check = True
+                                except:
+                                    pass
+
+                    if content_check:
+                        split_name.pop(len_name-1)
+                        clean_name = ' '.join(split_name)
+                        end_name = f'{count_name} {clean_name}'
+                        if end_name[-1] == ',':
+                            end_name = end_name.replace(end_name[-1], '')
+
+                        self.name_['name'] = end_name
+                        i['name'] = end_name
+
+                response = Database_functions.get_item(i)
+
                 if not response:
                     self.func_dialog_open(obj)
                     break
@@ -460,8 +522,10 @@ class BotiIko(MDApp):
                     temp['name'] = response['item']
                     temp['original'] = i['name']
                     self.end_docList.append(temp)
+
                 self.ind_convert_item += 1
                 self.scroll_layout.clear_widgets()
+
                 if self.btn_select_shop.text == 'Чек' or (self.checkbox_header.active and type(self.temp) == dict):
                     list_items_text3 = MDLabel(text=f'Дата: {self.temp["date"]}\n', theme_text_color='Custom',
                                                text_color=self.color_acent_1)
@@ -472,6 +536,7 @@ class BotiIko(MDApp):
                     data_layout = BoxLayout(orientation='horizontal', size_hint_y=None, height='120dp')
                     data_layout.add_widget(list_items_text3)
                     self.scroll_layout.add_widget(data_layout)
+
             for i1 in self.end_docList:
                 list_items_text1 = MDLabel(text='\n' + f"{i1['id']}. {i1['original']} ||||| {i1['name']} |||||",
                                            theme_text_color='Custom', text_color=self.color_acent_1)
@@ -609,13 +674,15 @@ class BotiIko(MDApp):
     # Диалоговое окно - Кнопка сохранить
     def func_dialog_save(self, obj):
         logging.info('ИНТЕРФЕЙС: func_dialog_save')
-        item = {self.item_name: self.items[self.item_name]}
-        response = Database_functions.update_items(item, self.name_, self.items)
-        self.enter_for_save = False
-        if response != False:
-            Database_functions.get_item(self.name_)
-            self.dialog.dismiss()
-            self.func_doc_convert_repeat(obj)
+        if self.item_name != None and self.items != None:
+            item = {self.item_name: self.items[self.item_name]}
+            response = Database_functions.update_items(item, self.name_, self.items)
+            self.enter_for_save = False
+            if response != False:
+                Database_functions.get_item(self.name_)
+                self.dialog.dismiss()
+                self.func_doc_convert_repeat(obj)
+                self.enter_1 = False
 
     # Диалоговое окно - Сохранить на ентер
     def func_dialog_save_enter(self, window, key, i, r, x):
@@ -624,9 +691,17 @@ class BotiIko(MDApp):
         print(self.dialog_wb)
         if self.dialog:
             if self.enter_for_save:
-                if log: print('Сработала функция нажатия Enter')
+                if log: print('Сработала функция нажатия Enter при выборе товара')
+                print(self.enter_for_save)
+                print(self.enter_1)
                 if key == 13:
                     self.func_dialog_save(key)
+            if self.dialog:
+                if not self.drop:
+                    if log: print('Сработала функция нажатия Enter при сохранении товара в базе данных')
+                    if key == 13:
+                        if self.enter_1:
+                            self.func_dialog_save(key)
         if self.dialog_wb:
             self.wb_save(self)
 
@@ -784,7 +859,7 @@ class BotiIko(MDApp):
                                     on_text_validate=self.func_dialog_enter,
                                     text_color_focus=self.color_acent_1, line_color_focus=self.color_acent_2,
                                     hint_text_color_focus=self.color_acent_2
-            )
+                                    )
 
             self.token = MDTextField(text=base_get()[0] if base_get() is not None else '',
                                      hint_text="Токен",
@@ -812,7 +887,7 @@ class BotiIko(MDApp):
             self.verify = MDLabel(halign="center", size_hint_x=None,
                                   theme_text_color='Custom', text_color=self.color_acent_1)
             # Наполнение верхнего меню
-            with open('Wildberries_database.txt', 'r', encoding='utf-8'):
+            with open('get_wb_db.txt', 'r', encoding='utf-8'):
                 if base_get() is None:
                     self.verify.text = 'Введите данные в форму ниже!'
                 else:
@@ -984,12 +1059,15 @@ class BotiIko(MDApp):
                     import re
                     self.tea_check = {'dateTime': 'T'.join(check['date'].strip('                        ').split(' ')),
                                       'requestNumber': check['number'].strip('                        '),
-                                      'items': [{'id': 0, 'name': 'Чай пакетированный', 'cost': re.sub("[^0-9,.]", "", str(all_price)),
-                                                 'count': re.sub("[^0-9,.]", "", str(all_count)), 'sum': re.sub("[^0-9,.]", "", str(all_price)), 'type': 'шт'}]}
+                                      'items': [{'id': 0, 'name': 'Чай пакетированный',
+                                                 'cost': re.sub("[^0-9,.]", "", str(all_price)),
+                                                 'count': re.sub("[^0-9,.]", "", str(all_count)),
+                                                 'sum': re.sub("[^0-9,.]", "", str(all_price)), 'type': 'шт'}]}
                     self.tea_checks.append(self.tea_check)
                     import json
 
-                    name = check['number'].strip('                        ')  + ' от ' + check['date'].strip('                        ').split(' ')[0]
+                    name = check['number'].strip('                        ') + ' от ' + \
+                           check['date'].strip('                        ').split(' ')[0]
                     name = '-'.join(name.split(':'))
 
                     if f'{name}.WB' not in self.onlyfiles:
@@ -1022,7 +1100,7 @@ class BotiIko(MDApp):
 
     def mshop_parse(self, instance):
         self.scan_file()
-        asyncio.ensure_future(async_mshop(self.tf_mshop2, self.onlyfiles))
+        asyncio.ensure_future(async_mshop(self.tf_mshop2))
 
 
 # Используем эту функцию для запуска цикла событий Kivy с интеграцией asyncio
