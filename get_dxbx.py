@@ -3,6 +3,7 @@ import time
 from bs4 import BeautifulSoup
 from selenium.webdriver import Chrome
 from selenium.webdriver.common.by import By
+import json
 
 log = True
 
@@ -71,7 +72,7 @@ def auth():
     return browser
 
 
-def get_check(num_check=2):
+def get_check(num_check):
     check_number = 1 + num_check  # Последний в списке начинается с: 2
     url2 = 'https://dxbx.ru/index#app/list/invoice'
 
@@ -164,7 +165,16 @@ def get_check(num_check=2):
     doc = {'header': header, 'items': items_dict_filtered}
     return doc
 
-items = get_check()
-for i in items:
-    print(items[i])
-    pass
+
+def save_file(num_check=1):
+    doc = get_check(num_check)
+    shops_names = {
+        'ИП Касумов М.А.': 'Хозы',
+        'ООО ТД Матушка': 'Матушка'
+    }
+    name = f'{doc["header"]["date"]} - {shops_names[doc["header"]["shop"]]}({doc["header"]["number"]}).MS'
+    print(name)
+    with open(f'documents/{name}', 'w', encoding='utf-8') as fp:
+        json.dump(doc, fp)
+
+save_file(num_check=1)
