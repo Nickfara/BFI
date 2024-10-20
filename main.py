@@ -20,7 +20,7 @@ import Database_connections as dc
 import Database_functions
 import get_wb as WB_Pars
 import autoclick
-import parse_metro
+import get_metro
 
 # !/usr/bin/env python # -* - coding: utf-8-* -
 print("Кодировка uft-8 включена")
