@@ -1,8 +1,14 @@
 import time
+import json
 
 from bs4 import BeautifulSoup
 from selenium.webdriver import Chrome
 from selenium.webdriver.common.by import By
+from os import listdir
+from os.path import isfile, join
+
+# !/usr/bin/env python # -* - coding: utf-8-* -
+print("Кодировка uft-8 включена")
 
 log = True
 
@@ -125,7 +131,7 @@ def get_check(num_check=1):
 
     date = re.sub("[^0-9-:T/]", "", date)
 
-    date = '-'.join(date.split('/')) + 'T09:00'
+    date = '.'.join(date.split('/'))
     items_dict = []
 
     id_item = 1
@@ -168,10 +174,71 @@ def get_check(num_check=1):
                 items_dict.append(item_end)
             id_item += 1
 
-    doc = {'dateTime': date,
-           'requestNumber': 'Неизвестно (Временно)',
-           'items': items_dict
-           }
+    header = {'date': date,
+           'number': '',
+           'shop': 'Метро'}
+    doc = {'header': header, 'items': items_dict}
     return doc
 
 
+def save_doc(check):
+    if log: print('[save_doc    ][get_metro]: ' + str(check))
+
+    numb = 1
+    print(numb)
+    while numb < 10:
+        print(numb)
+        temp_date = '-'.join(check['header']["date"].split("."))
+        print(temp_date)
+        name = f'{temp_date} - Метро({numb}).dc'
+        print(name)
+
+        onlyfiles = [f for f in listdir('documents') if isfile(join('documents', f))]
+        print(onlyfiles)
+        print(name)
+        if name not in onlyfiles:
+            print('Имени нет в папке')
+            print(onlyfiles)
+            with open(f'documents/{name}', 'w', encoding='utf-8') as fp:
+                json.dump(check, fp)
+            numb = 10
+        numb += 1
+
+def launch_parser(number_doc):
+    try:
+        numb_doc = number_doc
+        print('numb_doc:')
+        print(numb_doc)
+        if "-" in numb_doc:
+            numb_doc = numb_doc.split("-")
+            int(numb_doc[0])
+            int(numb_doc[1])
+            more = True
+            more_type = 0
+        elif "," in numb_doc:
+            numb_doc = numb_doc.split(",")
+            for i in numb_doc:
+                int(i)
+            more_type = 1
+        else:
+            numb_doc = int(number_doc)
+            more = False
+    except:
+        numb_doc = 1
+        more = False
+    try:
+        if more:
+            if more_type == '1':
+                doc_ind = numb_doc
+            else:
+                doc_ind = range(int(numb_doc[0]), int(numb_doc[1]))
+
+            for i in doc_ind:
+                check = get_check(i)
+                save_doc(check)
+        else:
+            check = get_check(int(numb_doc))
+            save_doc(check)
+    except:
+        return True
+    return True

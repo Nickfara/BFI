@@ -21,6 +21,11 @@ import Database_functions
 import get_wb as WB_Pars
 import autoclick
 import get_metro
+import get_dxbx
+
+from kivy.core.window import Window
+Window.size = (850,600)
+Window.minimum_width, Window.minimum_height = (850,600)
 
 # !/usr/bin/env python # -* - coding: utf-8-* -
 print("Кодировка uft-8 включена")
@@ -42,6 +47,7 @@ async def async_autoclick(a, b, c, d, e, f):
         executor = ThreadPoolExecutor()
 
         def start_clicker():
+            print('ЗАУПСК АВТКРИЫВАКЕРА')
             result = autoclick.start(a, b, c, e, f, check_data=d)
             items_warning.append(result)  # Запуск автокликера и добавление предупреждений если есть
 
@@ -52,7 +58,8 @@ async def async_autoclick(a, b, c, d, e, f):
         dc.update_item('АВТОКЛИКЕР', '0')
 
 
-async def async_mshop(tf_mshop2):
+async def async_mshop(number_doc):
+    logging.info('ИНТЕРФЕЙС: async_mshop')
     if async_mshop_antimissclick[0]:
         async_mshop_antimissclick[0] = False
 
@@ -60,70 +67,35 @@ async def async_mshop(tf_mshop2):
         from concurrent.futures import ThreadPoolExecutor
         executor = ThreadPoolExecutor()
 
-        def launch_parser():
-            def save_doc(check):
-                if log: print('[main    ][mshop_parse]: ', str(check))
+        def launch_async_get_metro():
+            response = get_metro.launch_parser(number_doc)
+            return response
 
-                import json
-
-                numb = 1
-                while numb < 10:
-                    name = f'{check["dateTime"].split("T")[0]}({numb}).MS'
-                    print(name)
-                    onlyfiles = [f for f in listdir('documents') if isfile(join('documents', f))]
-                    if name not in onlyfiles:
-                        print('Имени нет в папке')
-                        print(onlyfiles)
-                        with open(f'documents/{name}', 'w', encoding='utf-8') as fp:
-                            json.dump(check, fp)
-                        numb = 10
-                    numb += 1
-
-            try:
-                numb_doc = tf_mshop2.text
-                print('numb_doc:')
-                print(numb_doc)
-                if "-" in numb_doc:
-                    numb_doc = numb_doc.split("-")
-                    int(numb_doc[0])
-                    int(numb_doc[1])
-                    more = True
-                    more_type = 0
-                elif "," in numb_doc:
-                    numb_doc = numb_doc.split(",")
-                    for i in numb_doc:
-                        int(i)
-                    more_type = 1
-                else:
-                    numb_doc = int(tf_mshop2.text)
-                    more = False
-            except:
-                numb_doc = 1
-                more = False
-
-
-            try:
-                if more:
-                    if more_type == '1':
-                        doc_ind = numb_doc
-                    else:
-                        doc_ind = range(int(numb_doc[0]), int(numb_doc[1]))
-
-                    for i in doc_ind:
-                        check = parse_metro.get_check(i)
-                        save_doc(check)
-                else:
-                    check = parse_metro.get_check(int(numb_doc))
-                    save_doc(check)
-            except:
-                async_mshop_antimissclick[0] = True
-                return
-
-
-
+        response = await loop.run_in_executor(executor, launch_async_get_metro)
+        if response:
+            async_mshop_antimissclick[0] = response
+        else:
             async_mshop_antimissclick[0] = True
 
-        await loop.run_in_executor(executor, launch_parser)
+
+async def async_dxbx(number_doc):
+    logging.info('ИНТЕРФЕЙС: async_dxbx')
+    if async_mshop_antimissclick[0]:
+        async_mshop_antimissclick[0] = False
+
+        loop = asyncio.get_event_loop()
+        from concurrent.futures import ThreadPoolExecutor
+        executor = ThreadPoolExecutor()
+
+        def launch_async_get_metro():
+            response = get_dxbx.save_file(number_doc)
+            return response
+
+        response = await loop.run_in_executor(executor, launch_async_get_metro)
+        if response:
+            async_mshop_antimissclick[0] = response
+        else:
+            async_mshop_antimissclick[0] = True
 
 
 def base_get():
@@ -196,6 +168,7 @@ class BotiIko(MDApp):
     def scan_file(self):
         logging.info('ИНТЕРФЕЙС: scan_file')
         self.onlyfiles = [f for f in listdir('documents') if isfile(join('documents', f))]
+        print(self.onlyfiles)
 
         for i in self.teafiles:
             self.onlyfiles.append(i)
@@ -203,14 +176,16 @@ class BotiIko(MDApp):
         menu_items = []
         for doc_name in self.onlyfiles:
             if '.' in doc_name:
-                if doc_name.split('.')[1] in ['json', 'xls', 'xlsx', 'WB', 'MS']:
+                if doc_name.split('.')[1] in ['json', 'xls', 'xlsx', 'dc']:
                     menu_items.append({
                         "text": f"{doc_name}",
                         "on_release": lambda x=f"{doc_name}": self.func_select_doc_active(x),
                         'theme_text_color': 'Custom',
                         "text_color": self.color_acent_1,
-                        "md_bg_color": self.color_background_start
+                        "md_bg_color": self.color_background_start,
+                        "width_mult": 200
                     })
+        print(menu_items)
         return menu_items
 
     def build(self):
@@ -237,7 +212,7 @@ class BotiIko(MDApp):
 
         # _______________________________Выбор накладной
         def add_button_doc():
-            self.dropdown2 = MDDropdownMenu()
+            self.dropdown2 = MDDropdownMenu(width_mult=8)
             self.dropdown2.caller = self.btn_input_doc_name
             self.btn_input_doc_name.bind(on_release=self.func_select_doc)
             self.dropdown2.bind(on_select=lambda instance, x: setattr(self.btn_input_doc_name, 'text', x))
@@ -270,19 +245,19 @@ class BotiIko(MDApp):
                                         thumb_color_active=self.color_background_start)  # Переключатель цены
             self.switch_version = RFB(text='Режим', size_hint=(None, None), width='10dp', icon='plus',
                                       text_color=self.color_acent_1, line_color=self.color_acent_2,
-                                      on_release=self.func_switch_version)  # Переключатель режимов
+                                      on_release=self.func_switch_version, pos_hint={"center_x": 0.5, "center_y": 0.5})  # Переключатель режимов
             # _________________________Текст_Переключателей
             switch_header_text = MDLabel(text='Шапка:', valign="center", halign="right", theme_text_color='Custom',
                                          text_color=self.color_acent_1)
             switch_name_text = MDLabel(text='Название:', valign="center", halign="right", theme_text_color='Custom',
                                        text_color=self.color_acent_1)
-            switch_type_text = MDLabel(text='Тип товара:', valign="center", halign="right", theme_text_color='Custom',
+            switch_type_text = MDLabel(text='Ед. Изм.:', valign="center", halign="right", theme_text_color='Custom',
                                        text_color=self.color_acent_1)
             switch_count_text = MDLabel(text='Количество:', valign="center", halign="right", theme_text_color='Custom',
                                         text_color=self.color_acent_1)
             switch_cost_text = MDLabel(text='Цена:', valign="center", halign="right", theme_text_color='Custom',
                                        text_color=self.color_acent_1)
-            switch_version_text = MDLabel(text='Режим:', theme_text_color='Custom',
+            switch_version_text = MDLabel(text='', theme_text_color='Custom',
                                           text_color=self.color_acent_1)
 
             # Структура лэйаутов
@@ -292,6 +267,7 @@ class BotiIko(MDApp):
                               BoxLayout(orientation='horizontal'): (
                                   self.checkbox_header, switch_header_text, self.switch_header),
                               BoxLayout(orientation='horizontal'): (switch_count_text, self.switch_count),
+                              BoxLayout(orientation='horizontal'): (switch_cost_text, self.switch_cost),
                               BoxLayout(orientation='horizontal'): (switch_cost_text, self.switch_cost),
                               BoxLayout(orientation='horizontal'): (switch_version_text, self.switch_version)}
 
@@ -332,15 +308,20 @@ class BotiIko(MDApp):
                              line_color=self.color_panel, font_size=14)
 
         btn_wb = RFIB(icon='cart-arrow-down', text="Wildberries", on_release=self.wb_parse,
-                      size_hint=(1, .7), text_color='#8D297F', icon_color='#8D297F',
-                      line_color=self.color_panel, font_size=14, md_bg_color='white')
-        self.tf_mshop2 = MDTextField(size_hint=(None, None), width=10, halign='right', pos=(-1, 0))
-        tf_mshop = BoxLayout(orientation='horizontal', md_bg_color='white')
-        tf_mshop.add_widget(self.tf_mshop2)
+                      size_hint=(1, 1.4), text_color='white', md_bg_color='#8D297F', icon_color='white',
+                      line_color='white', font_size=13, font_style='Button')
 
-        btn_mshop = RFIB(icon='cart-arrow-down', text="MShop", on_release=self.mshop_parse,
-                         size_hint=(1, .7), text_color='#0000ff', icon_color='#0000ff',
-                         line_color=self.color_panel, font_size=14)
+        self.number_doc = MDTextField(size_hint=(None, None), width=50, pos_hint={"center_x": 0.5, "center_y": 0.5})
+
+
+        btn_dxbx = RFIB(icon='cart-arrow-down', text="DxBx", on_release=self.get_dxbx,
+                        size_hint=(1, 1.4), text_color='white', md_bg_color='#438eb9', icon_color='white',
+                        line_color='white', font_size=13, font_style='Button')
+
+        btn_mshop = RFIB(icon='cart-arrow-down', text="METRO", on_release=self.get_metro,
+                         size_hint=(1, 1.4), text_color='#ffed00', md_bg_color='#002d72', icon_color='#ffed00',
+                         line_color='white', font_size=12, font_style='Button')
+
 
         # ______________________________Кнопки
         self.btn_doc_read = RFB(text="Считать", on_release=self.func_doc_read, size_hint=(0.5, None),
@@ -355,6 +336,9 @@ class BotiIko(MDApp):
             add_button_doc()
             add_button_shops()
 
+            # Центральный лэйаут верхнего меню
+            self.top_center_layout = BoxLayout(orientation='vertical')
+
             # Лэйаут с кнопками-меню
             btn_select_layout = BoxLayout(orientation='horizontal', size_hint_y=None,
                                           height=self.btn_select_shop.height)
@@ -368,7 +352,7 @@ class BotiIko(MDApp):
             btn_dop_button_layout = BoxLayout(orientation='vertical', spacing=8, size_hint_y=None, height=40)
 
             # Лэйаут с кнопками
-            btn_layout = BoxLayout(orientation='vertical', size_hint_x=None, width=350, padding=10, spacing=10,
+            btn_layout = BoxLayout(orientation='vertical', size_hint_x=None, width=390, padding=10, spacing=10,
                                    md_bg_color=self.color_panel)
             # Лэйаут - верхнее меню, с лэйаутами выше
             top_layout = BoxLayout(orientation='horizontal', padding=(0, 0, 0, 0,), size_hint_y=None, height='240dp',
@@ -392,13 +376,13 @@ class BotiIko(MDApp):
                                          {btn_select_layout: {self.btn_select_shop: {}, self.btn_input_doc_name: {}},
                                           btn_read_layout: {self.btn_doc_read: {}, self.btn_doc_convert: {}},
                                           btn_dop_button_layout: {
-                                              btn_parsers_layout: {btn_wb: {}, tf_mshop: {}, btn_mshop: {}},
+                                              btn_parsers_layout: {btn_wb: {}, btn_dxbx: {}, btn_mshop: {}},
                                               btn_edit_layout: {btn_menu_item: {}}},
 
                                           btn_launch_autoclick: {},
                                           btn_check_warnings: {}
                                           },
-                                     BoxLayout(): {},
+                                     self.top_center_layout: {self.number_doc: {}, BoxLayout(): {}},
                                      switched(): {}
                                      }},
                            scroll: {self.scroll_layout: {}}}
@@ -421,7 +405,7 @@ class BotiIko(MDApp):
                         i.add_widget(i2)
                 layout.add_widget(i)
 
-            screen = Screen()
+            screen = Screen(size_hint_min_y=1)
             screen.add_widget(layout)
             return screen
 
@@ -436,7 +420,7 @@ class BotiIko(MDApp):
         self.scroll_layout.clear_widgets()
         if self.btn_select_shop != 'Выбрать поставщика':
             if self.btn_select_shop.text == 'Чек':
-                if self.btn_input_doc_name.text.split('.')[1].lower() in ('json', 'wb', 'ms'):
+                if self.btn_input_doc_name.text.split('.')[1].lower() in ('json', 'dc'):
                     self.temp = doc(self.btn_select_shop.text, f"documents/{self.btn_input_doc_name.text}")
                     if type(self.temp) == dict:
                         self.doc = self.temp['items']
@@ -488,7 +472,7 @@ class BotiIko(MDApp):
             for i in self.doc:
                 self.name_ = i
 
-                if self.btn_input_doc_name.text.split('.')[1].lower() == 'ms': # Перестановка количества товара с конца названия в начало
+                if self.btn_input_doc_name.text.split('.')[1].lower() == 'dc': # Перестановка количества товара с конца названия в начало
                     split_name = self.name_['name'].split(' ')
                     len_name = len(split_name)
                     count_name = split_name[len_name-1]
@@ -527,12 +511,12 @@ class BotiIko(MDApp):
                 self.scroll_layout.clear_widgets()
 
                 if self.btn_select_shop.text == 'Чек' or (self.checkbox_header.active and type(self.temp) == dict):
-                    list_items_text3 = MDLabel(text=f'Дата: {self.temp["date"]}\n', theme_text_color='Custom',
+                    list_items_text3 = MDLabel(text=f'Дата: {self.temp["header"]["date"]}\n', theme_text_color='Custom',
                                                text_color=self.color_acent_1)
                     if self.btn_select_shop.text == 'Чек':
-                        list_items_text3.text += f'\nЧек: {self.temp["check"]}\n\n'
+                        list_items_text3.text += f'\nЧек: {self.temp["header"]["number"]}\n\n'
                     else:
-                        list_items_text3.text += f'\n{self.temp["check"]}\n\n'
+                        list_items_text3.text += f'\n{self.temp["header"]["number"]}\n\n'
                     data_layout = BoxLayout(orientation='horizontal', size_hint_y=None, height='120dp')
                     data_layout.add_widget(list_items_text3)
                     self.scroll_layout.add_widget(data_layout)
@@ -578,17 +562,26 @@ class BotiIko(MDApp):
             checkboxs = {'name': self.switch_name.active, 'type': self.switch_type.active,
                          'count': self.switch_count.active, 'cost': self.switch_cost.active,
                          'header': self.switch_header.active}
+            print('ПРОВЕРКА1')
             if self.temp != None and (
                     self.btn_select_shop.text == 'Чек' or (self.checkbox_header.active and type(self.temp) == dict)):
-                number = self.temp["check"] if self.btn_input_doc_name.text.split('.')[
-                                                   1] == 'WB' else (
-                    f'\nЧек: {self.temp["check"]}' if self.btn_select_shop.text == 'Чек' else self.temp["check"])
-                info = {'date': self.temp["date"], 'number': number}
+                print('ПРОВЕРКА2')
+                print(self.temp)
+                number = self.temp["header"]["number"] if self.btn_input_doc_name.text.split('.')[
+                                                   1] == 'dc' else (
+                    f'\nЧек: {self.temp["header"]["number"]}' if self.btn_select_shop.text == 'Чек' else self.temp["header"]["number"])
+                print(number)
+                info = {'header': self.temp["header"]}
+                print(info)
+                print('ПРОВЕРКА8')
             else:
+                print('ПРОВЕРКА3')
                 info = None
+            print('ПРОВЕРКА4')
             asyncio.ensure_future(async_autoclick(self.end_docList, self.btn_select_shop, checkboxs, info,
                                                   self.btn_input_doc_name.text.split('.')[1],
                                                   self.checkbox_type.active))
+            print('ПРОВЕРКА5')
             # Autoclick.start(self.end_docList, self.btn_select_shop, checkboxs, check_data=info)
         except Exception as e:
             self.scroll_layout.clear_widgets()
@@ -820,7 +813,7 @@ class BotiIko(MDApp):
 
         if doc_name.capitalize() in self.shops:
             self.btn_select_shop.text = doc_name
-        elif doc_formate.lower() in ('json', 'wb', 'ms'):
+        elif doc_formate.lower() in ('json', 'dc'):
             self.btn_select_shop.text = 'Чек'
 
     # Пустая функция
@@ -1015,6 +1008,14 @@ class BotiIko(MDApp):
                     layout_itog = MDBoxLayout(orientation='horizontal')
                     layout_texts = MDBoxLayout(orientation='horizontal')
 
+                    print(check['date'])
+                    check['date'] = check['date'].split('                        ')[1]
+                    check['date'] = check['date'].split(' ')[0]
+                    print(check['date'])
+                    check['date'] = str(check['date']).split('-')
+                    print(check['date'])
+                    check['date'] = check['date'][2] + '.' + check['date'][1] + '.' + check['date'][0]
+
                     pos = 0
                     all_count = 0
                     all_price = 0
@@ -1057,8 +1058,10 @@ class BotiIko(MDApp):
                     layout_receipt.add_widget(layout_texts)
 
                     import re
-                    self.tea_check = {'dateTime': 'T'.join(check['date'].strip('                        ').split(' ')),
-                                      'requestNumber': check['number'].strip('                        '),
+                    header = {'date': 'T'.join(check['date'].strip('                        ').split(' ')),
+                              'number': check['number'].strip('                        '),
+                              'shop': 'Чек'}
+                    self.tea_check = {'header': header,
                                       'items': [{'id': 0, 'name': 'Чай пакетированный',
                                                  'cost': re.sub("[^0-9,.]", "", str(all_price)),
                                                  'count': re.sub("[^0-9,.]", "", str(all_count)),
@@ -1066,12 +1069,14 @@ class BotiIko(MDApp):
                     self.tea_checks.append(self.tea_check)
                     import json
 
-                    name = check['number'].strip('                        ') + ' от ' + \
-                           check['date'].strip('                        ').split(' ')[0]
+                    temp_date = check['date'].strip('                        ')
+                    temp_date = '-'.join(temp_date.split('.'))
+                    name = temp_date + ' - WB(' + \
+                           re.sub("[^а-яА-Я0-9.,]", "", check['number'].strip('                        ').split(' ')[0]) + ')'
                     name = '-'.join(name.split(':'))
 
                     if f'{name}.WB' not in self.onlyfiles:
-                        with open(f'documents/{name}.WB', 'w', encoding='utf-8') as fp:
+                        with open(f'documents/{name}.dc', 'w', encoding='utf-8') as fp:
                             json.dump(self.tea_check, fp)
 
                     # Нормализация размеров лайаутов
@@ -1098,10 +1103,15 @@ class BotiIko(MDApp):
         self.layout_menu.remove_widget(self.layout_middle)
         self.layout_menu.add_widget(self.layout_middle)
 
-    def mshop_parse(self, instance):
+    # Получение накладной с метро
+    def get_metro(self, instance):
         self.scan_file()
-        asyncio.ensure_future(async_mshop(self.tf_mshop2))
+        asyncio.ensure_future(async_mshop(self.number_doc.text))
 
+    # Получение накладных с сайта dxbx.ru
+    def get_dxbx(self, instance):
+        self.scan_file()
+        asyncio.ensure_future(async_dxbx(self.number_doc.text))
 
 # Используем эту функцию для запуска цикла событий Kivy с интеграцией asyncio
 def run_async():

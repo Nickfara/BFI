@@ -72,20 +72,18 @@ def auth():
     return browser
 
 
-def get_check(num_check):
-    check_number = 1 + num_check  # Последний в списке начинается с: 2
-    url2 = 'https://dxbx.ru/index#app/list/invoice'
-
+def get_check(number_doc):
     header = ''
-
     browser = auth()
 
     while True:
         try:
+            print(number_doc)
             browser.find_element(By.XPATH,
-                                 f'/html/body/div[4]/div[2]/div/div/div[1]/div/div/div/div/div/div/div/div/div/div/div[2]/div/div[2]/table/tbody/tr[{num_check}]').click()
+                                 f'/html/body/div[4]/div[2]/div/div/div[1]/div/div/div/div/div/div/div/div/div/div/div[2]/div/div[2]/table/tbody/tr[{number_doc}]').click()
             break
         except:
+            print(number_doc)
             time.sleep(1)
 
     while True:
@@ -166,15 +164,60 @@ def get_check(num_check):
     return doc
 
 
-def save_file(num_check=1):
-    doc = get_check(num_check)
+def save_file(number_doc=1):
+    try:
+        int(number_doc)
+    except:
+        print('Номер документа не число!')
+        number_doc=1
+    doc = get_check(number_doc)
     shops_names = {
         'ИП Касумов М.А.': 'Хозы',
         'ООО ТД Матушка': 'Матушка'
     }
-    name = f'{doc["header"]["date"]} - {shops_names[doc["header"]["shop"]]}({doc["header"]["number"]}).MS'
+    temp_date = '-'.join(doc["header"]["date"].split('.'))
+    name = f'{temp_date} - {shops_names[doc["header"]["shop"]]}({doc["header"]["number"]}).dc'
     print(name)
     with open(f'documents/{name}', 'w', encoding='utf-8') as fp:
         json.dump(doc, fp)
 
-save_file(num_check=1)
+
+
+def launch_parser(number_doc):
+    try:
+        numb_doc = number_doc
+        print('numb_doc:')
+        print(numb_doc)
+        if "-" in numb_doc:
+            numb_doc = numb_doc.split("-")
+            int(numb_doc[0])
+            int(numb_doc[1])
+            more = True
+            more_type = 0
+        elif "," in numb_doc:
+            numb_doc = numb_doc.split(",")
+            for i in numb_doc:
+                int(i)
+            more_type = 1
+        else:
+            numb_doc = int(number_doc)
+            more = False
+    except:
+        numb_doc = 1
+        more = False
+
+    try:
+        if more:
+            if more_type == '1':
+                doc_ind = numb_doc
+            else:
+                doc_ind = range(int(numb_doc[0]), int(numb_doc[1]))
+
+            for i in doc_ind:
+                save_file(int(i))
+        else:
+            save_file(int(numb_doc))
+    except:
+        return True
+
+    return True

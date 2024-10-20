@@ -44,15 +44,19 @@ def keyboard():  # Проверка
 
 def header(shop, check_data):
     logging.info('АВТОКЛИКЕР: header\033[0m')
+    print(check_data)
+    shop_name = check_data['header']['shop']
 
     shops = {'Чек': 'Рынок/Магазин', 'Коф': 'ИП Петухов В.В.', 'КофП': 'ИП Петухов В.В.',
-             'Метро': 'ООО "МЕТРО КЭШ ЭНД КЕРРИ"', 'Матушка': 'ООО ТД "Матушка"', 'Хозы': 'ИП Касумов М.А.',
+             'Метро': 'ООО "МЕТРО КЭШ ЭНД КЕРРИ"', 'Матушка': 'ООО ТД "Матушка"', 'ООО ТД Матушка': 'ООО ТД "Матушка"', 'Хозы': 'ИП Касумов М.А.',
              'Юнит': 'ООО "Юнит"', 'Выпечка': 'ИП Насретдинов Д.Н.', 'Айсберри': 'ООО ТД "Айсберри"',
              'Десан': 'ООО "ДЕСАН"', 'Виста': 'ООО "ВИСТ"', 'Кофе': 'ООО "СТС"', 'Арома': 'ИП Щербакова И. В.'}
+
     numbers = {'Чек': 'чек ', 'Коф': '', 'КофП': '',
                'Метро': '61 /030', 'Матушка': 'MKER-', 'Хозы': '',
                'Юнит': '', 'Выпечка': '', 'Айсберри': '',
                'Десан': '', 'Виста': 'USKA-00', 'Кофе': '', 'Арома': ''}
+
     shops_name = ('Рынок/Магазин', 'ИП Петухов В.В.', 'ООО "МЕТРО КЭШ ЭНД КЕРРИ"', 'ООО ТД "Матушка"',
                   'ИП Касумов М.А.', 'ООО "Юнит"', 'ИП Насретдинов Д.Н.', 'ООО ТД "Айсберри"', 'ООО "ДЕСАН"',
                   'ООО "ВИСТ"', 'ООО "СТС"', 'ИП Щербакова И. В.')
@@ -89,20 +93,25 @@ def header(shop, check_data):
     pyautogui.press('left')
     time.sleep(1.5)
 
+    if len(check_data['header']['date']) == 1:
+        check_data['header']['date'] = check_data['header']['date'][0]
     if check_data != None:
         time.sleep(0.5)
         if shop.text == 'Чек':
-            check_data['date'] = check_data['date'].split('T')[0].split('-')
+            check_data['header']['date'] = check_data['header']['date'].split('.')
         else:
-            check_data['date'] = check_data['date'].split('.')
-            if len(check_data['date']) > 2:
-                check_data['date'] = (check_data['date'][2], check_data['date'][1], check_data['date'][0])
+            check_data['header']['date'] = check_data['header']['date'].split('.')
+            if len(check_data['header']['date']) > 2:
+                check_data['header']['date'] = (check_data['header']['date'][2], check_data['header']['date'][1], check_data['header']['date'][0])
             else:
-                check_data['date'] = ('01', '01', '2024')
-        paste(check_data['date'][2])
+                check_data['header']['date'] = ('01', '01', '2024')
+
+
+        check_data['header']['date']
+        paste(check_data['header']['date'][2])
         time.sleep(5)
-        paste(check_data['date'][1])
-        paste(check_data['date'][0])
+        paste(check_data['header']['date'][1])
+        paste(check_data['header']['date'][0])
         time.sleep(5)
         pyautogui.press('tab', presses=2)
     else:
@@ -133,22 +142,22 @@ def header(shop, check_data):
     pyautogui.press('tab', presses=3)
     time.sleep(0.5)
     if check_data != None:
-        paste(check_data['number'])
+        paste(check_data['header']['number'])
         time.sleep(0.5)
         pyautogui.press('tab')
         if shop.text != 'Чек':
-            paste(check_data['number'])
+            paste(check_data['header']['number'])
             time.sleep(0.5)
         pyautogui.press('tab', presses=2)
         time.sleep(0.5)
-        paste(check_data['date'][2])
-        paste(check_data['date'][1])
-        paste(check_data['date'][0])
+        paste(check_data['header']['date'][2])
+        paste(check_data['header']['date'][1])
+        paste(check_data['header']['date'][0])
         time.sleep(0.5)
         pyautogui.press('tab', presses=2)
         time.sleep(0.2)
         if shop.text != 'Чек':
-            paste(check_data['number'])
+            paste(check_data['header']['number'])
             time.sleep(0.5)
         pyautogui.press('tab', presses=4)
     else:
@@ -189,84 +198,87 @@ def start(items, shop, checkboxs, format, type, check_data=None):
     item_n = 1
     item_warning = []
 
-    if isinstance(items, list):
-        if isinstance(items[0], dict) and len(items) > 0:
-            if checkboxs['header']:
-                header(shop, check_data)
-            for i in items:
-                if dc.get_item('АВТОКЛИКЕР')['names'] == '1':
-                    if log: print(f'Заводится: {i["name"]}')
-                    if log: print('ПРОВЕРКА ЧЕКБОКСОВ')
-                    if log: print(checkboxs)
-                    if checkboxs['name'] or checkboxs['type']:
-                        check_position('name')
+    print('ПРОВЕРКА')
+    print(items)
+    if len(items) > 0:
+        if isinstance(items, list):
+            if isinstance(items[0], dict) and len(items) > 0:
+                if checkboxs['header']:
+                    header(shop, check_data)
+                for i in items:
+                    if dc.get_item('АВТОКЛИКЕР')['names'] == '1':
+                        if log: print(f'Заводится: {i["name"]}')
+                        if log: print('ПРОВЕРКА ЧЕКБОКСОВ')
+                        if log: print(checkboxs)
+                        if checkboxs['name'] or checkboxs['type']:
+                            check_position('name')
 
-                        time.sleep(0.5)
-                        if checkboxs['name']:
-                            print('Заводится название: ' + str(i['name']))
-                            paste(i['name'])
+                            time.sleep(0.5)
+                            if checkboxs['name']:
+                                print('Заводится название: ' + str(i['name']))
+                                paste(i['name'])
 
-                        pyautogui.press('enter')
-
-                        if keyboard():
                             pyautogui.press('enter')
 
-                        if keyboard():
-                            if log: print('Курсор не на количестве, нажимается вправо.')
-                            pyautogui.press('right')
+                            if keyboard():
+                                pyautogui.press('enter')
 
-                        if checkboxs['type']:
-                            type_click(shop, i)
+                            if keyboard():
+                                if log: print('Курсор не на количестве, нажимается вправо.')
+                                pyautogui.press('right')
 
-                    if checkboxs['count'] or checkboxs['cost']:
-                        check_position('count')
+                            if checkboxs['type']:
+                                type_click(shop, i)
 
-                        if checkboxs['count']:
-                            print('Заводится количество: ' + str(i['count']))
-                            pyautogui.press('0')
-                            paste(i['count'])
+                        if checkboxs['count'] or checkboxs['cost']:
+                            check_position('count')
 
-                        pyautogui.press('enter')
+                            if checkboxs['count']:
+                                print('Заводится количество: ' + str(i['count']))
+                                pyautogui.press('0')
+                                paste(i['count'])
 
-                        if shop.text in ['Айсбери', 'Десан',
-                                         'Алма']:  # Если одна из этих накладных, то заводися сумма - шаги вправо
-                            pyautogui.press('right', presses=4)
+                            pyautogui.press('enter')
 
-                        if checkboxs['cost']:
-                            print('Заводится цена: ' + str(i['cost']))
-                            pyautogui.hotkey('ctrl', 'a')
-                            pyautogui.hotkey('ctrl', 'c')
-                            key = re.sub('[^0-9.,]', '', pyperclip.paste())
+                            if shop.text in ['Айсбери', 'Десан',
+                                             'Алма']:  # Если одна из этих накладных, то заводися сумма - шаги вправо
+                                pyautogui.press('right', presses=4)
 
-                            try:  # Проверка на дорогую стоимость
-                                check_sum = float(i['cost']) / float('.'.join(key.split(',')))
-                                if check_sum > 1.7:
-                                    print('ПРЕДУПРЕЖДЕНИЕ! В ДАННОЙ ПОЗИЦИИ СУММА СИЛЬНО ОТЛИЧАЕТСЯ!')
-                                    item_warning.append(item_n)
-                            except:
-                                pass
+                            if checkboxs['cost']:
+                                print('Заводится цена: ' + str(i['cost']))
+                                pyautogui.hotkey('ctrl', 'a')
+                                pyautogui.hotkey('ctrl', 'c')
+                                key = re.sub('[^0-9.,]', '', pyperclip.paste())
 
-                            paste(i['cost'])
+                                try:  # Проверка на дорогую стоимость
+                                    check_sum = float(i['cost']) / float('.'.join(key.split(',')))
+                                    if check_sum > 1.7:
+                                        print('ПРЕДУПРЕЖДЕНИЕ! В ДАННОЙ ПОЗИЦИИ СУММА СИЛЬНО ОТЛИЧАЕТСЯ!')
+                                        item_warning.append(item_n)
+                                except:
+                                    pass
 
-                        pyautogui.press('enter')
+                                paste(i['cost'])
 
-                        if shop.text in ['Айсбери',
-                                         'Десан'] or format == 'WB':  # Если одна из этих накладных, то заводися сумма - шаги влево
-                            pyautogui.press('left', presses=3)
+                            pyautogui.press('enter')
 
-                        if checkboxs['name'] or checkboxs['type']:
-                            pyautogui.press('left', presses=6)
+                            if shop.text in ['Айсбери',
+                                             'Десан'] or format == 'dc':  # Если одна из этих накладных, то заводися сумма - шаги влево
+                                pyautogui.press('left', presses=3)
+
+                            if checkboxs['name'] or checkboxs['type']:
+                                pyautogui.press('left', presses=6)
+                            else:
+                                pyautogui.press('left', presses=4)
+
+                            time.sleep(0.2)
+                            pyautogui.press('down')
+                            time.sleep(0.5)
                         else:
-                            pyautogui.press('left', presses=4)
-
-                        time.sleep(0.2)
-                        pyautogui.press('down')
-                        time.sleep(0.5)
-                    else:
-                        pyautogui.press('left', presses=2)
-                        time.sleep(0.2)
-                        pyautogui.press('down')
-                        time.sleep(1)
+                            pyautogui.press('left', presses=2)
+                            time.sleep(0.2)
+                            pyautogui.press('down')
+                            time.sleep(1)
     if log: print('Автокликер закончил свою работу!')
     if log: print('\033[0m')
     dc.update_item('АВТОКЛИКЕР', '0')

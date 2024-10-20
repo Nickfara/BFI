@@ -231,7 +231,7 @@ def check_(doc_):  # Сканер json чека
     if log: print('\033[43m')
     check = None
     with open(doc_, 'r', encoding='utf-8') as json_file:
-        if doc_.split('.')[1].lower() in ('json', 'wb', 'ms'):
+        if doc_.split('.')[1].lower() in ('json', 'dc'):
             data = json.load(json_file)
             print('ВНУТРЕННОСТИ JSONa')
             print(data)
@@ -242,7 +242,7 @@ def check_(doc_):  # Сканер json чека
             for i in items:  # Фильтрация обьектов
                 temp = 0
                 e = 0
-                if doc_.split('.')[1].lower() not in ('wb', 'ms'):
+                if doc_.split('.')[1].lower() not in ('dc'):
                     while e < len(filter_items):
                         if i['name'] == filter_items[e]['name']:
                             filter_items[e]['count'] += i['quantity']
@@ -258,10 +258,17 @@ def check_(doc_):  # Сканер json чека
                 else:
                     filter_items = items
 
-            if doc_.split('.')[1].lower() not in ('wb', 'ms'):
-                check = {'date': data['dateTime'], 'check': data['requestNumber'], 'items': filter_items, }
+            if doc_.split('.')[1].lower() != 'dc':
+                header = {'date': data['dateTime'],
+                          'number': data['requestNumber'],
+                          'shop': 'Чек'}
+                check = {'header': header, 'items': filter_items}
             else:
-                check = {'date': data['dateTime'], 'check': data['requestNumber'], 'items': filter_items, }
+                print(data)
+                header = {'date': data['header']['date'],
+                          'number': data['header']['number'],
+                          'shop': data['header']['shop']}
+                check = {'header': header, 'items': filter_items}
             return check
         else:
             return False
