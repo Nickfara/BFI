@@ -24,6 +24,7 @@ def copy_text():  # Проверка
     pyautogui.hotkey('ctrl', 'a')
     pyautogui.hotkey('ctrl', 'c')
     key = pyperclip.paste()
+    os.system('echo ' + 'текст'.strip() + '| clip')
     return key
 
 def keyboard():  # Проверка
@@ -238,7 +239,7 @@ def start(items, shop, checkboxs, format, type, check_data=None):
                                 pyautogui.press('0')
                                 paste(i['count'])
 
-                            pyautogui.press('enter')
+                                pyautogui.press('enter')
 
                             if shop.text in ['Айсбери', 'Десан',
                                              'Алма']:  # Если одна из этих накладных, то заводися сумма - шаги вправо
@@ -260,15 +261,17 @@ def start(items, shop, checkboxs, format, type, check_data=None):
 
                                 paste(i['cost'])
 
-                            pyautogui.press('enter')
+                                pyautogui.press('enter')
 
                             if shop.text in ['Айсбери',
-                                             'Десан'] or format == 'dc':  # Если одна из этих накладных, то заводися сумма - шаги влево
+                                             'Десан']:  # Если одна из этих накладных, то заводися сумма - шаги влево
                                 pyautogui.press('left', presses=3)
 
                             if checkboxs['name'] or checkboxs['type']:
+                                print('Выполняется 6 шагов влево')
                                 pyautogui.press('left', presses=6)
                             else:
+                                print('Выполняется 4 шага влево')
                                 pyautogui.press('left', presses=4)
 
                             time.sleep(0.2)
@@ -298,12 +301,16 @@ def check_position(type):
 
         result = keyboard()
 
-        pyautogui.press('tab', presses=3)
-        pyautogui.press('left', presses=8)
-        pyautogui.press('tab', presses=3 if type == 'count' else 1 if type == 'name' else 0)
+	
+        if result != (False if type == 'count' else check_text if type == 'name' else True):
+            pyautogui.press('tab', presses=3)
+            pyautogui.press('left', presses=10)
+            pyautogui.press('tab', presses=3 if type == 'count' else 1 if type == 'name' else 0)
+            print(f'Нажат 3 раза таб, 10 шагов влево и {3 if type == "count" else 1 if type == "name" else 0} раза таб')
 
         if result == (False if type == 'count' else check_text if type == 'name' else True):
             repeater = False
+            print('Выключается цикл проверки позиции')
 
 
 def type_click(shop, i):

@@ -268,7 +268,6 @@ class BotiIko(MDApp):
                                   self.checkbox_header, switch_header_text, self.switch_header),
                               BoxLayout(orientation='horizontal'): (switch_count_text, self.switch_count),
                               BoxLayout(orientation='horizontal'): (switch_cost_text, self.switch_cost),
-                              BoxLayout(orientation='horizontal'): (switch_cost_text, self.switch_cost),
                               BoxLayout(orientation='horizontal'): (switch_version_text, self.switch_version)}
 
             switch_left_layout = BoxLayout(orientation='vertical', padding=(0, 0, 40, 0), size_hint_x=None, width=185,
